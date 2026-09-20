@@ -3,9 +3,8 @@
 namespace Database\Seeders;
 
 use App\Models\Projects;
-use App\Models\TechStacks;
 use App\Models\Specializations;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\TechStacks;
 use Illuminate\Database\Seeder;
 
 class ProjectsSeeder extends Seeder

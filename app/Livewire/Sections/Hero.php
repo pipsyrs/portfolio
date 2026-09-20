@@ -1,10 +1,9 @@
 <?php
 
 namespace App\Livewire\Sections;
-use App\Models\User;
-use App\Models\Setting;
+
 use App\Models\Projects;
-use Illuminate\Support\Facades\Auth;
+use App\Models\User;
 use Livewire\Component;
 
 class Hero extends Component
@@ -15,7 +14,6 @@ class Hero extends Component
 
         return view('livewire.sections.hero', [
             'user' => $user,
-            'setting' => Setting::first(),
             'projectsCount' => Projects::count(),
             'certificationsCount' => is_array($user?->certifications) ? count($user->certifications) : 0,
         ]);

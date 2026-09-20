@@ -3,7 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\TechStacks;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class TechStacksSeeder extends Seeder
@@ -21,7 +20,7 @@ class TechStacksSeeder extends Seeder
                 'name' => 'NextJS',
             ],
             [
-                'name' => 'Bootstrap'
+                'name' => 'Bootstrap',
             ],
             [
                 'name' => 'TailwindCSS',
@@ -48,7 +47,7 @@ class TechStacksSeeder extends Seeder
 
         foreach ($data as $item) {
             TechStacks::firstOrCreate([
-                'name' => $item['name']
+                'name' => $item['name'],
             ], $item);
         }
     }

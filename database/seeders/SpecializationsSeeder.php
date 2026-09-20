@@ -3,8 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\Specializations;
-
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class SpecializationsSeeder extends Seeder
@@ -23,12 +21,12 @@ class SpecializationsSeeder extends Seeder
             ],
             [
                 'name' => 'Frontend Developer',
-            ]
+            ],
         ];
 
         foreach ($data as $item) {
             Specializations::firstOrCreate([
-                'name' => $item['name']
+                'name' => $item['name'],
             ], $item);
         }
     }

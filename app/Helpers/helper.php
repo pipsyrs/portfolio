@@ -1,5 +1,11 @@
 <?php
 
+use App\Support\Settings;
+use DeepL\Translator;
+use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Lang;
+use Illuminate\Support\Facades\Storage;
+
 if (! function_exists('safe_image_url')) {
     function safe_image_url($path = null, $folder = null)
     {
@@ -18,19 +24,19 @@ if (! function_exists('safe_image_url')) {
 
         // Jika path belum mengandung folder (hanya nama file), tambahkan folder
         if ($folder && ! str_contains($path, '/')) {
-            $path = trim($folder, '/') . '/' . $path;
+            $path = trim($folder, '/').'/'.$path;
         }
         // Jika path sudah mengandung '/', berarti sudah format folder/nama_file — pakai langsung
 
         // File lama / field yang masih memakai disk publik (mis. foto profil).
-        $public = \Illuminate\Support\Facades\Storage::disk('public');
+        $public = Storage::disk('public');
         if ($public->exists($path)) {
             return $public->url($path);
         }
 
         // Field yang diunggah ke disk privat (di luar webroot) — sajikan lewat
         // signed URL sementara supaya file tidak bisa ditebak/diakses langsung.
-        $private = \Illuminate\Support\Facades\Storage::disk('private');
+        $private = Storage::disk('private');
         if ($private->exists($path)) {
             return $private->temporaryUrl($path, now()->addHours(6));
         }
@@ -70,7 +76,8 @@ if (! function_exists('format_bytes')) {
         $pow = floor(($bytes ? log($bytes) : 0) / log(1024));
         $pow = min($pow, count($units) - 1);
         $bytes /= (1 << (10 * $pow));
-        return round($bytes, $precision) . ' ' . $units[$pow];
+
+        return round($bytes, $precision).' '.$units[$pow];
     }
 }
 
@@ -82,16 +89,16 @@ if (! function_exists('get_real_ip')) {
     function get_real_ip()
     {
         $request = request();
-        
+
         // Try to get IP from various headers in order of priority
         $headers = [
             'HTTP_CF_CONNECTING_IP',    // Cloudflare
             'HTTP_X_REAL_IP',            // Nginx proxy
             'HTTP_X_FORWARDED_FOR',      // Standard proxy header
             'HTTP_CLIENT_IP',            // Proxy
-            'REMOTE_ADDR'                // Direct connection
+            'REMOTE_ADDR',                // Direct connection
         ];
-        
+
         foreach ($headers as $header) {
             if ($ip = $request->server($header)) {
                 // X-Forwarded-For can contain multiple IPs, get the first one
@@ -99,14 +106,14 @@ if (! function_exists('get_real_ip')) {
                     $ips = explode(',', $ip);
                     $ip = trim($ips[0]);
                 }
-                
+
                 // Validate IP
                 if (filter_var($ip, FILTER_VALIDATE_IP)) {
                     return $ip;
                 }
             }
         }
-        
+
         // Fallback to Laravel's ip() method
         return $request->ip();
     }
@@ -133,45 +140,51 @@ if (! function_exists('get_location_from_ip')) {
             try {
                 // Use ip-api.com free service (limit: 45 requests per minute)
                 // Added fields: city, regionName, country, timezone, isp
-                $response = \Illuminate\Support\Facades\Http::timeout(5)->get("http://ip-api.com/json/{$ip}?fields=status,message,country,regionName,city,timezone,isp");
-                
+                $response = Illuminate\Support\Facades\Http::timeout(5)->get("https://ip-api.com/json/{$ip}?fields=status,message,country,regionName,city,timezone,isp");
+
                 if ($response->successful()) {
                     $data = $response->json();
-                    
+
                     if (isset($data['status']) && $data['status'] === 'success') {
                         $city = $data['city'] ?? '';
                         $region = $data['regionName'] ?? '';
                         $country = $data['country'] ?? '';
-                        
+
                         // Format: City, Region, Country or City, Country
                         $location = [];
-                        if ($city) $location[] = $city;
-                        if ($region && $region !== $city) $location[] = $region;
-                        if ($country) $location[] = $country;
-                        
-                        return !empty($location) ? implode(', ', $location) : '-';
+                        if ($city) {
+                            $location[] = $city;
+                        }
+                        if ($region && $region !== $city) {
+                            $location[] = $region;
+                        }
+                        if ($country) {
+                            $location[] = $country;
+                        }
+
+                        return ! empty($location) ? implode(', ', $location) : '-';
                     }
-                    
+
                     // Log error jika ada
                     if (isset($data['message'])) {
-                        \Illuminate\Support\Facades\Log::warning('IP Location API Error', [
+                        Illuminate\Support\Facades\Log::warning('IP Location API Error', [
                             'ip' => $ip,
-                            'message' => $data['message']
+                            'message' => $data['message'],
                         ]);
                     }
                 } else {
-                    \Illuminate\Support\Facades\Log::warning('IP Location API Failed', [
+                    Illuminate\Support\Facades\Log::warning('IP Location API Failed', [
                         'ip' => $ip,
-                        'status' => $response->status()
+                        'status' => $response->status(),
                     ]);
                 }
-            } catch (\Exception $e) {
-                \Illuminate\Support\Facades\Log::error('IP Location Exception', [
+            } catch (Exception $e) {
+                Illuminate\Support\Facades\Log::error('IP Location Exception', [
                     'ip' => $ip,
-                    'error' => $e->getMessage()
+                    'error' => $e->getMessage(),
                 ]);
             }
-            
+
             return 'Lokasi tidak diketahui';
         });
     }
@@ -181,13 +194,14 @@ if (! function_exists('fa_access_token')) {
     function fa_access_token()
     {
         return cache()->remember('fa-access-token', 3500, function () {
-            $response = Http::withToken(env('FONTAWESOME_API_TOKEN'))
+            $response = Http::withToken(config('services.fontawesome.token'))
                 ->post('https://api.fontawesome.com/token');
 
             $json = $response->json();
 
-            if (!isset($json['access_token'])) {
-                \Log::error('FA token error', $json ?? []);
+            if (! isset($json['access_token'])) {
+                Log::error('FA token error', $json ?? []);
+
                 return null;
             }
 
@@ -211,28 +225,28 @@ if (! function_exists('translate_text')) {
 
         $locale = $targetLocale ?? app()->getLocale();
 
-        $cacheKey = 'trans_' . md5($text) . '_' . $locale;
+        $cacheKey = 'trans_'.md5($text).'_'.$locale;
 
         // Only successful translations are cached forever. A failed attempt
         // (e.g. a transient API error or quota issue) must NOT be written to
         // a permanent cache, otherwise the untranslated fallback gets stuck
         // there forever and the string never gets a real chance to translate
         // again.
-        $cached = \Illuminate\Support\Facades\Cache::get($cacheKey);
+        $cached = Cache::get($cacheKey);
         if ($cached !== null) {
             return $cached;
         }
 
         // Skip re-attempting while a recent failure is in its cooldown
         // window, so an outage doesn't hammer the API on every request.
-        if (\Illuminate\Support\Facades\Cache::has($cacheKey . '_cooldown')) {
+        if (Cache::has($cacheKey.'_cooldown')) {
             return $text;
         }
 
         $apiKey = config('services.deepl.key');
 
         if (blank($apiKey)) {
-            \Illuminate\Support\Facades\Log::warning('translate_text: DEEPL_API_KEY is not configured.');
+            Illuminate\Support\Facades\Log::warning('translate_text: DEEPL_API_KEY is not configured.');
 
             return $text;
         }
@@ -246,7 +260,7 @@ if (! function_exists('translate_text')) {
         };
 
         try {
-            $translator = new \DeepL\Translator($apiKey);
+            $translator = new Translator($apiKey);
 
             $result = $translator->translateText($text, null, $targetLang);
             $translated = $result->text;
@@ -255,16 +269,16 @@ if (! function_exists('translate_text')) {
                 return $text;
             }
 
-            \Illuminate\Support\Facades\Cache::forever($cacheKey, $translated);
+            Cache::forever($cacheKey, $translated);
 
             return $translated;
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             // Briefly cache the failure so a rate-limit / outage doesn't
             // cause every single request to re-hammer the API, while still
             // allowing a retry soon after.
-            \Illuminate\Support\Facades\Cache::put($cacheKey . '_cooldown', true, now()->addMinutes(2));
+            Cache::put($cacheKey.'_cooldown', true, now()->addMinutes(2));
 
-            \Illuminate\Support\Facades\Log::warning('translate_text failed', [
+            Illuminate\Support\Facades\Log::warning('translate_text failed', [
                 'locale' => $locale,
                 'error' => $e->getMessage(),
             ]);
@@ -284,11 +298,11 @@ if (! function_exists('bt')) {
     function bt(string $key): string
     {
         $en = $key; // In this project the English lang file is the identity map (key === source string).
-        $id = \Illuminate\Support\Facades\Lang::has($key, 'id')
-            ? \Illuminate\Support\Facades\Lang::get($key, [], 'id')
+        $id = Lang::has($key, 'id')
+            ? Lang::get($key, [], 'id')
             : $key;
 
-        return '<span class="i18n-en">' . e($en) . '</span><span class="i18n-id">' . e($id) . '</span>';
+        return '<span class="i18n-en">'.e($en).'</span><span class="i18n-id">'.e($id).'</span>';
     }
 }
 
@@ -302,8 +316,8 @@ if (! function_exists('bt_variant')) {
     function bt_variant(string $key, string $locale): string
     {
         if ($locale === 'id') {
-            return \Illuminate\Support\Facades\Lang::has($key, 'id')
-                ? \Illuminate\Support\Facades\Lang::get($key, [], 'id')
+            return Lang::has($key, 'id')
+                ? Lang::get($key, [], 'id')
                 : $key;
         }
 
@@ -334,6 +348,32 @@ if (! function_exists('bt_dynamic')) {
             $id = e($id);
         }
 
-        return '<span class="i18n-en">' . $en . '</span><span class="i18n-id">' . $id . '</span>';
+        return '<span class="i18n-en">'.$en.'</span><span class="i18n-id">'.$id.'</span>';
+    }
+}
+
+if (! function_exists('settings')) {
+    /**
+     * Akses pengaturan aplikasi dari mana saja.
+     *
+     *   settings()                    -> App\Support\Settings
+     *   settings('app_name')          -> nilai satu key
+     *   settings(['app_name' => 'X']) -> menyimpan
+     */
+    function settings(string|array|null $key = null, mixed $default = null): mixed
+    {
+        $settings = app(Settings::class);
+
+        if ($key === null) {
+            return $settings;
+        }
+
+        if (is_array($key)) {
+            $settings->set($key);
+
+            return $settings;
+        }
+
+        return $settings->get($key, $default);
     }
 }

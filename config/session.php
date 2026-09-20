@@ -34,6 +34,19 @@ return [
 
     'lifetime' => (int) env('SESSION_LIFETIME', 120),
 
+    /*
+    |--------------------------------------------------------------------------
+    | Batas Sesi Mutlak (menit)
+    |--------------------------------------------------------------------------
+    |
+    | 'lifetime' di atas adalah batas MENGANGGUR dan diperbarui tiap request.
+    | Nilai ini adalah batas keras sejak waktu login: setelah terlampaui, sesi
+    | berakhir walaupun pengguna aktif terus. Isi 0 untuk menonaktifkan.
+    |
+    */
+
+    'absolute_lifetime' => (int) env('SESSION_ABSOLUTE_LIFETIME', 120),
+
     'expire_on_close' => env('SESSION_EXPIRE_ON_CLOSE', false),
 
     /*

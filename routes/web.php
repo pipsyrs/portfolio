@@ -1,55 +1,67 @@
 <?php
 
+use App\Http\Controllers\CvController;
+use App\Http\Controllers\SecureFileController;
+use App\Livewire\Dashboard;
 use Illuminate\Support\Facades\Route;
-use Illuminate\Support\Facades\File;
-use App\Models\Visitor;
 
-Route::get('/backup/download/{file}', function (string $file) {
-    // Database backups contain full application data — never expose them to
-    // anonymous visitors, and never trust the filename as given (path traversal).
-    abort_unless(auth()->check() && auth()->user()->can('viewAny', \App\Filament\Pages\DatabaseBackup::class), 403);
+/*
+|--------------------------------------------------------------------------
+| Halaman publik
+|--------------------------------------------------------------------------
+*/
 
-    $file = basename($file);
-    $path = storage_path('app/backups/' . $file);
-    abort_unless(File::exists($path), 404);
-    return response()->download($path);
-})->name('backup.download');
+Route::get('/', fn () => view('index'))
+    ->middleware('track.visitor')
+    ->name('index');
 
-Route::get('/view/cv', function () {
-    $user = \App\Models\User::first();
-    if (!$user || !$user->cv_file) {
-        abort(404);
-    }
+Route::get('/view/cv', [CvController::class, 'show'])->name('view.cv');
 
-    // cv_file is uploaded to the private disk, but keep a fallback to the
-    // public disk for any legacy records saved before the switch.
-    $disk = \Illuminate\Support\Facades\Storage::disk('private');
-    if (! $disk->exists($user->cv_file)) {
-        $disk = \Illuminate\Support\Facades\Storage::disk('public');
-    }
+Route::get('lang/{locale}', function (string $locale) {
+    abort_unless(in_array($locale, ['en', 'id'], true), 404);
 
-    abort_unless($disk->exists($user->cv_file), 404);
+    session()->put('locale', $locale);
 
-    $filename = 'CV_' . str_replace(' ', '_', $user->name) . '.' . pathinfo($user->cv_file, PATHINFO_EXTENSION);
-
-    return response($disk->get($user->cv_file), 200, [
-        'Content-Type'        => 'application/pdf',
-        'Content-Disposition' => 'inline; filename="' . $filename . '"',
-    ]);
-})->name('view.cv');
-
-Route::get('/', function (\Illuminate\Http\Request $request) {
-    Visitor::create([
-        'ip_address' => $request->ip(),
-        'visited_date' => now()->toDateString(),
-        'user_agent' => $request->userAgent()
-    ]);
-    return view('index');
-})->name('index');
-
-Route::get('lang/{locale}', function ($locale) {
-    if (in_array($locale, ['en', 'id'])) {
-        session()->put('locale', $locale);
-    }
-    return redirect()->back();
+    return back();
 })->name('lang.switch');
+
+/*
+|--------------------------------------------------------------------------
+| Dashboard (single-account)
+|--------------------------------------------------------------------------
+*/
+
+Route::prefix('pipspanel')->name('dashboard.')->group(function () {
+    Route::middleware('guest')->group(function () {
+        Route::get('login', Dashboard\Auth\Login::class)->name('login');
+    });
+
+    Route::middleware(['auth', 'auth.session', 'session.absolute', 'owner'])->group(function () {
+        Route::get('/', Dashboard\Home::class)->name('home');
+
+        Route::get('projects', Dashboard\Projects\Index::class)->name('projects');
+        Route::get('projects/create', Dashboard\Projects\Form::class)->name('projects.create');
+        Route::get('projects/{project}/edit', Dashboard\Projects\Form::class)->name('projects.edit');
+
+        Route::get('tech-stacks', Dashboard\TechStacks\Index::class)->name('tech-stacks');
+        Route::get('specializations', Dashboard\Specializations\Index::class)->name('specializations');
+        Route::get('contacts', Dashboard\Contacts\Index::class)->name('contacts');
+        Route::get('notifications', Dashboard\Notifications\Index::class)->name('notifications');
+        Route::get('profile', Dashboard\Profile\Edit::class)->name('profile');
+        Route::get('settings', Dashboard\Settings\Edit::class)->name('settings');
+        Route::get('backup', Dashboard\Backup\Index::class)->name('backup');
+
+        // Signed URL berumur pendek: tautan yang bocor tidak bisa dipakai ulang.
+        Route::get('backup/download/{file}', [SecureFileController::class, 'backup'])
+            ->name('backup.download')
+            ->middleware('signed');
+
+        Route::post('logout', function () {
+            auth()->logout();
+            session()->invalidate();
+            session()->regenerateToken();
+
+            return redirect()->route('dashboard.login');
+        })->name('logout');
+    });
+});

@@ -13,7 +13,7 @@ return new class extends Migration
     {
         // Create Project Table
         Schema::create('projects', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('name');
             $table->text('description')->nullable();
             $table->string('image')->nullable();
@@ -22,20 +22,20 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Create Pivot Project has Tech Stacks
+        // Pivot tidak memakai kolom id sendiri: barisnya diidentifikasi oleh
+        // pasangan foreign key, dan sync() memang tidak mengisi kolom id.
         Schema::create('project_tech_stack', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
-            $table->foreignId('tech_stack_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
+            $table->foreignUuid('project_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('tech_stack_id')->constrained()->onDelete('cascade');
+
+            $table->primary(['project_id', 'tech_stack_id']);
         });
 
-        // Create Pivot Project has Specializations
         Schema::create('project_specialization', function (Blueprint $table) {
-            $table->id();
-            $table->foreignId('project_id')->constrained()->onDelete('cascade');
-            $table->foreignId('specialization_id')->constrained()->onDelete('cascade');
-            $table->timestamps();
+            $table->foreignUuid('project_id')->constrained()->onDelete('cascade');
+            $table->foreignUuid('specialization_id')->constrained()->onDelete('cascade');
+
+            $table->primary(['project_id', 'specialization_id']);
         });
     }
 

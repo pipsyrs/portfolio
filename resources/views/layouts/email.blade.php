@@ -1,7 +1,6 @@
 @php
-    $settings = \App\Models\Setting::first();
-    $primaryColor = $settings?->app_color ?? '#38bdf8';
-    $appName = $settings?->app_name ?? config('app.name', 'Portfolio');
+    $primaryColor = settings()->color();
+    $appName = settings('app_name') ?? config('app.name', 'Portfolio');
 @endphp
 <!DOCTYPE html>
 <html lang="id">

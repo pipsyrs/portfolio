@@ -35,6 +35,15 @@ return [
         ],
     ],
 
+    'recaptcha' => [
+        'enabled' => (bool) env('RECAPTCHA_ENABLED', false),
+        'site_key' => env('RECAPTCHA_SITE_KEY'),
+        'secret' => env('RECAPTCHA_SECRET'),
+        'threshold' => (float) env('RECAPTCHA_THRESHOLD', 0.5),
+    ],
+    'fontawesome' => [
+        'token' => env('FONTAWESOME_API_TOKEN'),
+    ],
     'deepl' => [
         'key' => env('DEEPL_API_KEY'),
     ],

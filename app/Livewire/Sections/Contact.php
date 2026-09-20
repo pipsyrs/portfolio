@@ -3,34 +3,49 @@
 namespace App\Livewire\Sections;
 
 use App\Mail\ContactMail;
-use App\Models\User;
 use App\Models\Contacts;
-use Filament\Notifications\Notification;
+use App\Models\User;
+use App\Notifications\NewContactMessage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\RateLimiter;
 use Livewire\Component;
 
 class Contact extends Component
 {
     public $email;
+
     public $address;
+
     public $phone;
 
     // Form fields
     public $name = '';
+
     public $senderEmail = '';
+
     public $subject = '';
+
     public $message = '';
 
     public function mount()
     {
-        $data = User::first();
-        $this->email = $data->email;
-        $this->address = $data->address;
-        $this->phone = $data->phone;
+        $data = User::owner();
+        $this->email = $data?->email;
+        $this->address = $data?->address;
+        $this->phone = $data?->phone;
     }
 
     public function sendMessage()
     {
+        $key = 'contact-form:'.request()->ip();
+
+        if (RateLimiter::tooManyAttempts($key, 3)) {
+            session()->flash('contact-error', __('Too many messages sent. Please try again later.'));
+
+            return;
+        }
+
         $this->validate([
             'name' => 'required|string|min:2|max:100',
             'senderEmail' => 'required|email|max:150',
@@ -47,8 +62,15 @@ class Contact extends Component
             'message.min' => __('Message must be at least 10 characters.'),
         ]);
 
+        RateLimiter::hit($key, 600);
+
         try {
-            $recipientEmail = User::first()->email;
+            // Alamat khusus dari Pengaturan menang; email profil jadi cadangan.
+            $recipientEmail = settings('contact_notification_email') ?: User::owner()?->email;
+
+            if (blank($recipientEmail)) {
+                throw new \RuntimeException('Alamat tujuan pesan kontak belum diatur.');
+            }
 
             Mail::to($recipientEmail)->send(new ContactMail(
                 senderName: $this->name,
@@ -57,27 +79,21 @@ class Contact extends Component
                 messageBody: $this->message,
             ));
 
-            $superAdmins = User::whereHas('roles', function ($query) {
-                $query->where('slug', 'superadmin');
-            })->get();
-
-            Notification::make()
-                ->title('New Message From ' . $this->name)
-                ->body($this->message)
-                ->success()
-                ->sendToDatabase($superAdmins);
-
-            Contacts::create([
+            $contact = Contacts::create([
                 'name' => $this->name,
                 'email' => $this->senderEmail,
                 'subject' => $this->subject,
                 'message' => $this->message,
             ]);
 
+            User::owner()?->notify(new NewContactMessage($contact));
+
             $this->reset(['name', 'senderEmail', 'subject', 'message']);
 
             session()->flash('contact-success', __('Your message has been sent successfully! Thank you for reaching out.'));
         } catch (\Exception $e) {
+            Log::error('Contact form failed', ['error' => $e->getMessage()]);
+
             session()->flash('contact-error', __('Sorry, there was an error sending your message. Please try again later.'));
         }
     }

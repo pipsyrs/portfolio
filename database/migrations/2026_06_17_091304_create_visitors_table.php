@@ -12,12 +12,12 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('visitors', function (Blueprint $table) {
-            $table->id();
+            $table->uuid('id')->primary();
             $table->string('ip_address', 45);
             $table->date('visited_date');
             $table->text('user_agent')->nullable();
             $table->timestamps();
-            
+
             // Ensure one IP is counted only once per day
             $table->unique(['ip_address', 'visited_date']);
         });

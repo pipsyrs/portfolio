@@ -1,6 +1,5 @@
 @php
-    $settings = \App\Models\Setting::first();
-    $primaryColor = $settings ? ($settings->app_color ?? '#38bdf8') : '#38bdf8';
+    $primaryColor = settings()->color();
 @endphp
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="scroll-smooth">

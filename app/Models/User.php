@@ -2,24 +2,41 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
+use Illuminate\Broadcasting\BroadcastException;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
-use Filament\Models\Contracts\HasAvatar;
-use Filament\Models\Contracts\FilamentUser;
-use Filament\Panel;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Http\Request;
 use Illuminate\Notifications\Notifiable;
+use Illuminate\Support\Facades\Log;
 
-class User extends Authenticatable implements HasAvatar, FilamentUser
+class User extends Authenticatable
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, HasUuids, Notifiable {
+        Notifiable::notify as private dispatchNotification;
+    }
 
     /**
-     * The attributes that are mass assignable.
+     * Kegagalan siaran tidak boleh menggagalkan aksi yang memicunya.
      *
+     * Kanal `database` dijalankan lebih dulu, jadi saat Reverb sedang mati
+     * notifikasinya tetap tersimpan dan lonceng dashboard menyusul lewat
+     * polling. Hanya kegagalan broadcast yang ditelan — galat basis data
+     * tetap naik ke pemanggil.
+     */
+    public function notify($instance): void
+    {
+        try {
+            $this->dispatchNotification($instance);
+        } catch (BroadcastException $e) {
+            Log::warning('Siaran notifikasi gagal, dashboard kembali ke polling', [
+                'error' => $e->getMessage(),
+            ]);
+        }
+    }
+
+    /**
      * @var list<string>
      */
     protected $fillable = [
@@ -43,20 +60,15 @@ class User extends Authenticatable implements HasAvatar, FilamentUser
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
-     *
      * @var list<string>
      */
     protected $hidden = [
         'password',
         'remember_token',
+        'two_factor_secret',
+        'two_factor_recovery_codes',
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
     protected function casts(): array
     {
         return [
@@ -65,62 +77,47 @@ class User extends Authenticatable implements HasAvatar, FilamentUser
             'about_extra_information' => 'array',
             'careers' => 'array',
             'certifications' => 'array',
+            // Terenkripsi di basis data: dump saja tidak cukup untuk melewati 2FA.
+            'two_factor_secret' => 'encrypted',
+            'two_factor_recovery_codes' => 'encrypted:array',
+            'two_factor_confirmed_at' => 'datetime',
         ];
     }
 
-    public function canAccessPanel(Panel $panel): bool
+    /**
+     * Aplikasi ini single-account: pemilik adalah user dengan id terkecil.
+     * Di-cache supaya tidak memukul database pada tiap request landing.
+     */
+    public static function owner(): ?self
     {
-        // Ganti dengan email Anda atau aturan spesifik lainnya
-        // return str_ends_with($this->email, );
-
-        // ATAU jika Anda ingin mengizinkan semua user yang login (untuk sementara):
-        return true;
+        return cache()->remember('portfolio.owner', now()->addHour(), fn () => static::query()->oldest('id')->first());
     }
 
-    // Methods
-    public function getFilamentAvatarUrl(): ?string
+    public static function forgetOwnerCache(): void
     {
-        return $this->foto
-            ? asset('storage/'.$this->foto)
-            : null;
+        cache()->forget('portfolio.owner');
     }
 
-    public function hasRoles($roles): array
+    public function isOwner(): bool
     {
-        return $this->roles()->whereIn('slug', (array) $roles)->pluck('slug')->toArray();
+        return $this->getKey() === static::owner()?->getKey();
     }
 
-    public function hasPermission(string $permissionName): bool
+    public function avatarUrl(): string
     {
-        return $this->roles()
-            ->whereHas('permissions', function ($query) use ($permissionName) {
-                $query->where('name', $permissionName);
-            })
-            ->exists();
+        return safe_image_url($this->foto, 'profile-photos');
     }
 
-    public static function createLog(
-        Request $request,
-        string $activity,
-        ?string $description = null,
-    ): void {
-        ActivityLogs::create([
-            'user_id' => auth()->id(),
-            'activity' => $activity,
-            'ip_address' => $request->ipLocation(),
-            'user_agent' => $request->userAgent(),
-            'description' => $description,
-        ]);
+    public function hasTwoFactorEnabled(): bool
+    {
+        return $this->two_factor_confirmed_at !== null && filled($this->two_factor_secret);
     }
 
-    // Relationship
-    public function roles()
+    /**
+     * @return array<int,string>
+     */
+    public function recoveryCodes(): array
     {
-        return $this->belongsToMany(Roles::class, 'user_has_roles', 'user_id', 'role_id');
-    }
-
-    public function activityLogs()
-    {
-        return $this->hasMany(ActivityLogs::class);
+        return is_array($this->two_factor_recovery_codes) ? $this->two_factor_recovery_codes : [];
     }
 }

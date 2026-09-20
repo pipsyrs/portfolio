@@ -3,8 +3,6 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\Roles;
-
 use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
@@ -13,26 +11,24 @@ class UserSeeder extends Seeder
 {
     use WithoutModelEvents;
 
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Buat Admin User
-        $superadmin = User::firstOrCreate(
-            ['email' => 'superadmin@example.com'],
+        // Aplikasi ini single-account: satu baris user adalah pemilik portfolio.
+        // Kredensial awal dibaca dari .env supaya tidak ada kata sandi tetap di
+        // dalam repositori; ganti segera setelah login pertama.
+        $email = env('OWNER_EMAIL', 'owner@example.com');
+        $password = env('OWNER_PASSWORD', '12345678');
+
+        User::firstOrCreate(
+            ['email' => $email],
             [
-                'name' => 'Superadmin',
-                'email' => 'superadmin@example.com',
-                'phone' => '1234567890',
-                'password' => Hash::make('123'),
-            ]
+                'name' => env('OWNER_NAME', 'Portfolio Owner'),
+                'phone' => '0000000000',
+                'password' => Hash::make($password),
+            ],
         );
 
-        // Attach role superadmin
-        $superadminRole = Roles::where('slug', 'superadmin')->first();
-        if ($superadminRole) {
-            $superadmin->roles()->syncWithoutDetaching([$superadminRole->id]);
-        }
+        $this->command?->warn('User pemilik dibuat dengan email: '.$email);
+        $this->command?->warn('Segera ganti kata sandi lewat menu Profil setelah login pertama.');
     }
 }

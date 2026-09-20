@@ -10,7 +10,7 @@ class Projects extends Component
     public function render()
     {
         return view('livewire.sections.projects', [
-            'projects' => ProjectModel::with('techStacks')->orderBy('created_at', 'desc')->get()
+            'projects' => ProjectModel::with('techStacks')->orderBy('created_at', 'desc')->get(),
         ]);
     }
 }

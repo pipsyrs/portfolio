@@ -30,6 +30,17 @@ return [
     |
     */
 
+    /*
+    |--------------------------------------------------------------------------
+    | Lokasi biner mysqldump
+    |--------------------------------------------------------------------------
+    |
+    | Pada shared hosting / aaPanel, mysqldump sering tidak ada di PATH global.
+    | Isi dengan jalur absolut bila perintah backup tidak ditemukan.
+    |
+    */
+
+    'mysqldump_path' => env('MYSQLDUMP_PATH', 'mysqldump'),
     'connections' => [
 
         'sqlite' => [

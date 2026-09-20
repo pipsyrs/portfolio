@@ -13,7 +13,9 @@ class ContactMail extends Mailable
     use Queueable, SerializesModels;
 
     public string $senderName;
+
     public string $senderEmail;
+
     public string $messageBody;
 
     /**

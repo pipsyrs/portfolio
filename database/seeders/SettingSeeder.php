@@ -2,31 +2,33 @@
 
 namespace Database\Seeders;
 
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
+use App\Models\Setting;
 use Illuminate\Database\Seeder;
 
 class SettingSeeder extends Seeder
 {
     /**
-     * Run the database seeds.
+     * Menulis nilai awal untuk key yang belum pernah diisi. Key yang sudah ada
+     * tidak ditimpa, sehingga seeder aman dijalankan ulang.
      */
     public function run(): void
     {
-        \App\Models\Setting::firstOrCreate(
-            ['id' => 1],
-            [
-            'app_name' => 'Dashboard Starter',
-            'app_name_short' => 'DS',
-            'app_color' => '#6366f1',
-            'app_logo' => null,
-            'app_favicon' => null,
-            'app_stempel' => null,
-            'app_background_login_image' => null,
-            'youtube_link' => null,
-            'instagram_link' => null,
-            'tiktok_link' => null,
-            'facebook_link' => null,
-            'x_twitter_link' => null,
-        ]);
+        $defaults = [
+            'app_name' => 'Portfolio',
+            'app_name_short' => 'PORTFOLIO',
+            'app_color' => '#38bdf8',
+            'maintenance_mode' => false,
+            'visitor_tracking_enabled' => true,
+            'backup_retention' => 10,
+            'backup_schedule' => 'daily',
+            'notification_polling' => 30,
+            'mail_encryption' => 'tls',
+            'recaptcha_enabled' => false,
+            'recaptcha_threshold' => 0.5,
+        ];
+
+        $existing = Setting::query()->pluck('key')->all();
+
+        settings()->set(array_diff_key($defaults, array_flip($existing)));
     }
 }

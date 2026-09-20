@@ -29,8 +29,8 @@
                         {!! bt('View My Work') !!}
                         <i class="fas fa-arrow-right ml-2 text-sm"></i>
                     </a>
-                    @if($setting->github_link)
-                        <a href="{{ $setting->github_link }}" target="_blank" class="magnetic btn-secondary w-full sm:w-auto px-7 py-3.5 rounded-xl flex items-center justify-center">
+                    @if(settings('github_link'))
+                        <a href="{{ settings('github_link') }}" target="_blank" class="magnetic btn-secondary w-full sm:w-auto px-7 py-3.5 rounded-xl flex items-center justify-center">
                             <i class="fab fa-github mr-2"></i> {!! bt('GitHub Profile') !!}
                         </a>
                     @endif

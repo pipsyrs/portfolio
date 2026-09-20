@@ -12,19 +12,19 @@
             </div>
 
             <!-- Social Links -->
-            @if ($setting->youtube_link || $setting->linkedin_link || $setting->instagram_link || $setting->github_link || $setting->tiktok_link || $setting->facebook_link || $setting->x_twitter_link)
+            @if (settings('youtube_link') || settings('linkedin_link') || settings('instagram_link') || settings('github_link') || settings('tiktok_link') || settings('facebook_link') || settings('x_twitter_link'))
                 <div class="text-center md:text-right">
                     <h4 class="font-semibold mb-4 text-sm uppercase tracking-wider" style="color: var(--ink);">{!! bt('Connect') !!}</h4>
                     <div class="flex space-x-3 justify-center md:justify-end">
                         @php
                             $socials = [
-                                ['link' => $setting->youtube_link, 'icon' => 'fab fa-youtube', 'label' => 'YouTube'],
-                                ['link' => $setting->linkedin_link, 'icon' => 'fab fa-linkedin-in', 'label' => 'LinkedIn'],
-                                ['link' => $setting->instagram_link, 'icon' => 'fab fa-instagram', 'label' => 'Instagram'],
-                                ['link' => $setting->github_link, 'icon' => 'fab fa-github', 'label' => 'GitHub'],
-                                ['link' => $setting->tiktok_link, 'icon' => 'fab fa-tiktok', 'label' => 'TikTok'],
-                                ['link' => $setting->facebook_link, 'icon' => 'fab fa-facebook-f', 'label' => 'Facebook'],
-                                ['link' => $setting->x_twitter_link, 'icon' => 'fab fa-twitter', 'label' => 'X'],
+                                ['link' => settings('youtube_link'), 'icon' => 'fab fa-youtube', 'label' => 'YouTube'],
+                                ['link' => settings('linkedin_link'), 'icon' => 'fab fa-linkedin-in', 'label' => 'LinkedIn'],
+                                ['link' => settings('instagram_link'), 'icon' => 'fab fa-instagram', 'label' => 'Instagram'],
+                                ['link' => settings('github_link'), 'icon' => 'fab fa-github', 'label' => 'GitHub'],
+                                ['link' => settings('tiktok_link'), 'icon' => 'fab fa-tiktok', 'label' => 'TikTok'],
+                                ['link' => settings('facebook_link'), 'icon' => 'fab fa-facebook-f', 'label' => 'Facebook'],
+                                ['link' => settings('x_twitter_link'), 'icon' => 'fab fa-twitter', 'label' => 'X'],
                             ];
                         @endphp
                         @foreach($socials as $social)

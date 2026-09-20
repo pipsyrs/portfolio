@@ -1,8 +1,9 @@
 @php
-    $user = \App\Models\User::first();
-    $settings = \App\Models\Setting::first();
-    $primaryColor = $settings ? ($settings->app_color ?? '#38bdf8') : '#38bdf8';
+    $user = \App\Models\User::owner();
+    $primaryColor = settings()->color();
     $currentLocale = app()->getLocale();
+    $seoKeywords = settings('seo_keywords') ?: $user?->keywords;
+    $seoImage = safe_image_url(settings('seo_og_image') ?: ($user->foto ?? 'images/seo-banner.jpg'));
 @endphp
 
 <!DOCTYPE html>
@@ -26,12 +27,12 @@
     </script>
 
     <title>{{ $user->name ?? 'Portfolio' }} | {{ $user->specialis ?? 'Fullstack Web Developer' }}</title>
-    <link rel="icon" href="{{ safe_image_url($settings->app_favicon) }}">
+    <link rel="icon" href="{{ safe_image_url(settings('app_favicon')) }}">
 
     <!-- Primary Meta Tags -->
     <meta name="title" content="{{ $user->name ?? 'Portfolio' }} | {{ $user->specialis ?? 'Fullstack Web Developer' }}">
     <meta name="description" content="{{ $user->headline ?? 'Portfolio of John Doe, a passionate Fullstack Web Developer specializing in Laravel, Vue.js, and Tailwind CSS. Building robust, scalable, and beautifully designed web applications.' }}">
-    <meta name="keywords" content="{{ $user->keywords }}">
+    <meta name="keywords" content="{{ $seoKeywords }}">
     <meta name="author" content="{{ $user->name }}">
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url()->current() }}">
@@ -41,14 +42,14 @@
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="{{ $user->name ?? config('app.name', 'Portfolio') }} | {{ $user->specialis ?? 'Fullstack Web Developer' }}">
     <meta property="og:description" content="{{ $user->headline ?? 'Portfolio of John Doe, a passionate Fullstack Web Developer specializing in Laravel, Vue.js, and Tailwind CSS.' }}">
-    <meta property="og:image" content="{{ safe_image_url($user->foto ?? 'images/seo-banner.jpg') }}">
+    <meta property="og:image" content="{{ $seoImage }}">
 
     <!-- Twitter -->
     <meta property="twitter:card" content="summary_large_image">
     <meta property="twitter:url" content="{{ url()->current() }}">
     <meta property="twitter:title" content="{{ $user->name ?? config('app.name', 'Portfolio') }} | {{ $user->specialis ?? 'Fullstack Web Developer' }}">
     <meta property="twitter:description" content="{{ $user->headline ?? 'Portfolio of John Doe, a passionate Fullstack Web Developer specializing in Laravel, Vue.js, and Tailwind CSS.' }}">
-    <meta property="twitter:image" content="{{ safe_image_url($user->foto ?? 'images/seo-banner.jpg') }}">
+    <meta property="twitter:image" content="{{ $seoImage }}">
 
     <!-- Google Fonts: Inter (UI) + JetBrains Mono (tech/security accents) -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -67,123 +68,10 @@
     <!-- Livewire Styles -->
     @livewireStyles
 
+    @include('partials.design-tokens', ['primary' => $primaryColor])
+
     <style>
-        :root {
-            --primary: {{ $primaryColor }};
-            --ink: #1a1f2b;
-            --ink-soft: #5b6472;
-            --hairline: #e2e5eb;
-            --surface: #ffffff;
-            --surface-alt: #f2f4f8;
-            --glass-bg: rgba(255, 255, 255, 0.62);
-            --glass-border: rgba(15, 23, 42, 0.09);
-            --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-        }
-        .dark {
-            --ink: #e7ecf3;
-            --ink-soft: #8b95a8;
-            --hairline: #232a38;
-            --surface: #0a0e16;
-            --surface-alt: #10151f;
-            --glass-bg: rgba(255, 255, 255, 0.045);
-            --glass-border: rgba(255, 255, 255, 0.09);
-        }
-
-        html, body { overflow-x: hidden; width: 100%; }
-
-        body {
-            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background-color: var(--surface);
-            color: var(--ink);
-            transition: background-color 0.25s ease, color 0.25s ease;
-        }
-
         section { position: relative; z-index: 1; }
-
-        /* Fixed "blueprint" grid texture behind everything — a quiet nod to the
-           engineering/security theme. Fixed (not scrolled) and radially masked so
-           it reads as ambient depth near the top of the viewport, never noisy. */
-        #bg-grid {
-            position: fixed;
-            inset: 0;
-            z-index: 0;
-            pointer-events: none;
-            background-image:
-                linear-gradient(color-mix(in srgb, var(--ink) 6%, transparent) 1px, transparent 1px),
-                linear-gradient(90deg, color-mix(in srgb, var(--ink) 6%, transparent) 1px, transparent 1px);
-            background-size: 44px 44px;
-            -webkit-mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, black, transparent 75%);
-            mask-image: radial-gradient(ellipse 75% 55% at 50% 0%, black, transparent 75%);
-        }
-
-        /* ---- Language switch: both variants are rendered server-side, CSS just
-           toggles visibility, so switching is instant with zero network/render
-           work on the client. See bt()/bt_dynamic() in app/Helpers/helper.php. ---- */
-        html[data-locale="id"] .i18n-en { display: none; }
-        html:not([data-locale="id"]) .i18n-id { display: none; }
-
-        /* Scrollbar */
-        ::-webkit-scrollbar { width: 6px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #d4d4d4; border-radius: 99px; }
-        ::-webkit-scrollbar-thumb:hover { background: #b5b5b5; }
-        .dark ::-webkit-scrollbar-thumb { background: #3a3a3a; }
-        .dark ::-webkit-scrollbar-thumb:hover { background: #4d4d4d; }
-
-        /* Glassmorphism card system — translucent surface + blur so the grid
-           backdrop reads through, with a hairline border that turns into a soft
-           accent-colored glow on hover/interaction instead of a generic shadow. */
-        .card {
-            background-color: var(--glass-bg);
-            backdrop-filter: blur(18px) saturate(160%);
-            -webkit-backdrop-filter: blur(18px) saturate(160%);
-            border: 1px solid var(--glass-border);
-            transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
-        }
-        .card-hover:hover {
-            border-color: color-mix(in srgb, var(--primary) 40%, var(--glass-border));
-            box-shadow: 0 10px 30px color-mix(in srgb, var(--primary) 12%, transparent), 0 4px 14px rgba(0, 0, 0, 0.06);
-            transform: translateY(-3px);
-        }
-        .dark .card-hover:hover {
-            box-shadow: 0 0 0 1px color-mix(in srgb, var(--primary) 30%, transparent), 0 10px 34px color-mix(in srgb, var(--primary) 18%, transparent);
-        }
-
-        .eyebrow {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            color: var(--primary);
-            font-family: var(--font-mono);
-            font-weight: 600;
-            font-size: 0.8125rem;
-            letter-spacing: 0.03em;
-            text-transform: uppercase;
-        }
-        .eyebrow .section-num {
-            color: var(--ink-soft);
-            opacity: 0.7;
-        }
-        .eyebrow .section-num::after { content: '/'; margin-left: 0.4em; opacity: 0.6; }
-
-        .mono { font-family: var(--font-mono); }
-
-        .btn-primary {
-            background-color: var(--primary);
-            color: #fff;
-            font-weight: 600;
-            transition: filter 0.2s ease, transform 0.2s ease;
-        }
-        .btn-primary:hover { filter: brightness(0.92); transform: translateY(-1px); }
-
-        .btn-secondary {
-            background-color: transparent;
-            border: 1px solid var(--hairline);
-            color: var(--ink);
-            font-weight: 600;
-            transition: border-color 0.2s ease, transform 0.2s ease;
-        }
-        .btn-secondary:hover { border-color: var(--ink-soft); transform: translateY(-1px); }
 
         /* Nav */
         #navbar {
@@ -213,6 +101,10 @@
         }
         .nav-link:hover::after { transform: scaleX(1); }
 
+        /* Scrollspy active nav link (persistent, on top of the hover state) */
+        .nav-link.active { color: var(--ink); }
+        .nav-link.active::after { transform: scaleX(1); }
+
         .lang-toggle {
             background-color: var(--surface-alt);
             border: 1px solid var(--hairline);
@@ -227,16 +119,6 @@
             color: #fff;
             background-color: var(--primary);
         }
-
-        .theme-toggle-btn {
-            width: 40px; height: 40px; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            background-color: var(--surface-alt);
-            border: 1px solid var(--hairline);
-            color: var(--ink-soft);
-            transition: color 0.2s ease, border-color 0.2s ease;
-        }
-        .theme-toggle-btn:hover { color: #f59e0b; }
 
         .project-filter-chip {
             background-color: var(--surface);
@@ -259,44 +141,6 @@
             width: 0%;
             background-color: var(--primary);
             z-index: 70;
-        }
-
-        /* Scrollspy active nav link (persistent, on top of the hover state) */
-        .nav-link.active { color: var(--ink); }
-        .nav-link.active::after { transform: scaleX(1); }
-
-        /* Magnetic buttons: JS drives the transform, CSS just eases it */
-        .magnetic { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
-
-        /* Rich text rendered from RichEditor fields (about description, project
-           description, career description) — one shared style so formatted
-           content (bold, links, lists, quotes) looks native to the design instead
-           of raw browser defaults. */
-        .prose-content { color: var(--ink-soft); line-height: 1.75; }
-        .prose-content > *:first-child { margin-top: 0; }
-        .prose-content > *:last-child { margin-bottom: 0; }
-        .prose-content p { margin: 0 0 0.85em; }
-        .prose-content strong { color: var(--ink); font-weight: 600; }
-        .prose-content a { color: var(--primary); text-decoration: underline; text-underline-offset: 2px; }
-        .prose-content ul, .prose-content ol { margin: 0.5em 0 0.85em 1.25em; }
-        .prose-content ul { list-style: disc; }
-        .prose-content ol { list-style: decimal; }
-        .prose-content li { margin-bottom: 0.35em; }
-        .prose-content blockquote { border-left: 3px solid var(--primary); padding-left: 1em; margin: 0.85em 0; font-style: italic; }
-        .prose-content h2, .prose-content h3 { color: var(--ink); font-weight: 700; margin: 0.9em 0 0.4em; }
-        .prose-content h2 { font-size: 1.3em; }
-        .prose-content h3 { font-size: 1.1em; }
-        .prose-content code { background-color: var(--surface-alt); padding: 0.15em 0.4em; border-radius: 0.35em; font-size: 0.9em; }
-
-        /* Fades out clamped rich-text previews (project cards) instead of an
-           abrupt cut — line-clamp doesn't handle multi-block HTML reliably.
-           Masking the content's own opacity (rather than painting a solid/tinted
-           gradient on top) means it blends correctly on any background — glass,
-           dark mode, whatever — with no color to keep in sync. */
-        .fade-clip {
-            overflow: hidden;
-            -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
-            mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
         }
     </style>
 </head>

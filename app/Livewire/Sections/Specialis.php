@@ -10,7 +10,7 @@ class Specialis extends Component
     public function render()
     {
         return view('livewire.sections.specialis', [
-            'specializations' => Specializations::all()
+            'specializations' => Specializations::all(),
         ]);
     }
 }

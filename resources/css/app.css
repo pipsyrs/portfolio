@@ -10,3 +10,566 @@
     --font-sans: 'Instrument Sans', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
         'Segoe UI Symbol', 'Noto Color Emoji';
 }
+
+/* ---------------------------------------------------------------------------
+   Dashboard component layer
+   Token warna/font berasal dari partials/design-tokens.blade.php supaya
+   dashboard dan landing memakai sistem desain yang sama persis.
+   --------------------------------------------------------------------------- */
+@layer components {
+    /* --- Shell --- */
+    /* Di mobile sidebar melayang di atas konten sebagai drawer, jadi harus
+       benar-benar solid. Translusen hanya masuk akal di desktop, tempat ia
+       menempel di tepi dan grid latar boleh terbaca tembus. */
+    /* Lebar rail ditentukan kelas .is-collapsed, bukan inline style dari JS:
+       setiap morph DOM Livewire menghapus atribut style yang tidak ada di HTML
+       server, sehingga rail kembali melebar sementara kelasnya tetap menempel. */
+    .dash-sidebar {
+        background-color: var(--surface);
+        border-right: 1px solid var(--hairline);
+        width: 260px;
+        transition: width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                    transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @media (min-width: 1024px) {
+        .dash-sidebar {
+            background-color: color-mix(in srgb, var(--surface) 84%, transparent);
+            backdrop-filter: blur(20px) saturate(160%);
+            -webkit-backdrop-filter: blur(20px) saturate(160%);
+        }
+    }
+
+    .dash-topbar {
+        background-color: color-mix(in srgb, var(--surface) 78%, transparent);
+        backdrop-filter: blur(14px) saturate(160%);
+        -webkit-backdrop-filter: blur(14px) saturate(160%);
+        border-bottom: 1px solid var(--hairline);
+    }
+
+    /* --- Navigasi sidebar --- */
+    .dash-nav-link {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        padding: 0.625rem 0.875rem;
+        border-radius: 0.625rem;
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: var(--ink-soft);
+        transition: color 0.2s ease, background-color 0.2s ease;
+    }
+    .dash-nav-link:hover {
+        color: var(--ink);
+        background-color: var(--surface-alt);
+    }
+    .dash-nav-link.active {
+        font-weight: 500;
+        color: var(--primary);
+        background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+    }
+    /* Penanda vertikal di kiri item aktif — menggantikan highlight blok penuh */
+    .dash-nav-link.active::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 20%;
+        bottom: 20%;
+        width: 2px;
+        border-radius: 99px;
+        background: var(--primary);
+    }
+    .dash-nav-link i { width: 1.125rem; text-align: center; font-size: 0.9375rem; }
+
+    /* --- Form --- */
+    .dash-label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 500;
+        color: var(--ink);
+        margin-bottom: 0.4rem;
+    }
+    .dash-hint { font-size: 0.75rem; color: var(--ink-soft); margin-top: 0.35rem; }
+    .dash-error {
+        font-size: 0.75rem;
+        color: var(--danger);
+        margin-top: 0.35rem;
+        display: flex;
+        align-items: center;
+        gap: 0.3rem;
+    }
+
+    .dash-input {
+        width: 100%;
+        background-color: var(--surface);
+        border: 1px solid var(--hairline);
+        border-radius: 0.625rem;
+        padding: 0.625rem 0.875rem;
+        font-size: 0.875rem;
+        color: var(--ink);
+        transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    .dash-input::placeholder { color: var(--ink-soft); opacity: 0.7; }
+    .dash-input:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+    }
+    .dash-input:disabled { opacity: 0.6; cursor: not-allowed; }
+    .dash-input.is-invalid {
+        border-color: var(--danger);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 14%, transparent);
+    }
+
+    /* --- Tabel --- */
+    .dash-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .dash-table th {
+        text-align: left;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 500;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--ink-soft);
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid var(--hairline);
+        white-space: nowrap;
+    }
+    .dash-table td {
+        padding: 0.875rem 1rem;
+        font-size: 0.875rem;
+        color: var(--ink);
+        border-bottom: 1px solid color-mix(in srgb, var(--hairline) 60%, transparent);
+        vertical-align: middle;
+    }
+    .dash-table tbody tr { transition: background-color 0.15s ease; }
+    .dash-table tbody tr:hover { background-color: color-mix(in srgb, var(--primary) 4%, transparent); }
+    .dash-table tbody tr:last-child td { border-bottom: none; }
+
+    /* --- Badge --- */
+    .dash-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35rem;
+        font-family: var(--font-mono);
+        font-size: 0.6875rem;
+        font-weight: 500;
+        letter-spacing: 0.02em;
+        padding: 0.2rem 0.55rem;
+        border-radius: 0.375rem;
+        border: 1px solid transparent;
+        white-space: nowrap;
+    }
+
+    /* --- Skeleton --- */
+    .dash-skeleton {
+        background: linear-gradient(
+            90deg,
+            color-mix(in srgb, var(--ink) 6%, transparent) 25%,
+            color-mix(in srgb, var(--ink) 11%, transparent) 37%,
+            color-mix(in srgb, var(--ink) 6%, transparent) 63%
+        );
+        background-size: 400% 100%;
+        animation: dash-shimmer 1.4s ease infinite;
+        border-radius: 0.5rem;
+    }
+    @keyframes dash-shimmer {
+        0% { background-position: 100% 50%; }
+        100% { background-position: 0 50%; }
+    }
+
+    /* --- Stat card: angka mono besar, label kecil --- */
+    .dash-stat-value {
+        font-family: var(--font-mono);
+        font-size: 1.75rem;
+        font-weight: 600;
+        line-height: 1;
+        color: var(--ink);
+        letter-spacing: -0.02em;
+    }
+    .dash-stat-label {
+        font-size: 0.75rem;
+        font-weight: 400;
+        color: var(--ink-soft);
+    }
+}
+
+/* --- Overlay loading full-page --- */
+#dash-loading {
+    position: fixed;
+    inset: 0;
+    z-index: 90;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: color-mix(in srgb, var(--surface) 72%, transparent);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+#dash-loading.is-active { opacity: 1; pointer-events: auto; }
+
+/* Spinner: cincin tipis beraksen warna primary, bukan spinner tebal generik */
+.dash-spinner {
+    width: 2.25rem;
+    height: 2.25rem;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--ink) 12%, transparent);
+    border-top-color: var(--primary);
+    animation: dash-spin 0.7s linear infinite;
+}
+@keyframes dash-spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-skeleton, .dash-spinner { animation: none; }
+    .card-hover:hover, .btn-primary:hover, .btn-secondary:hover { transform: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Toggle: warna track saat aktif dibedakan per makna, bukan seragam.
+   Hijau = sesuatu menyala/sehat, kuning = mode yang perlu disadari,
+   merah = keadaan berbahaya, biru = preferensi netral.
+   --------------------------------------------------------------------------- */
+.dash-switch-track {
+    background-color: var(--hairline);
+    transition: background-color 180ms ease;
+}
+.dash-switch-thumb {
+    transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.peer:checked ~ .dash-switch-thumb { transform: translateX(1rem); }
+
+.peer:checked ~ .dash-switch-track { background-color: var(--primary); }
+.tone-success .peer:checked ~ .dash-switch-track { background-color: var(--success); }
+.tone-warning .peer:checked ~ .dash-switch-track { background-color: var(--warning); }
+.tone-danger  .peer:checked ~ .dash-switch-track { background-color: var(--danger); }
+.tone-info    .peer:checked ~ .dash-switch-track { background-color: var(--info); }
+
+/* Kartu toggle ikut menandai dirinya saat aktif, supaya status terbaca
+   sekilas tanpa harus memeriksa posisi thumb satu per satu. */
+.dash-switch {
+    transition: border-color 180ms ease, background-color 180ms ease;
+}
+.dash-switch:has(.peer:checked) {
+    border-color: color-mix(in srgb, var(--primary) 45%, var(--hairline));
+    background-color: color-mix(in srgb, var(--primary) 6%, transparent);
+}
+.dash-switch.tone-success:has(.peer:checked) {
+    border-color: color-mix(in srgb, var(--success) 45%, var(--hairline));
+    background-color: color-mix(in srgb, var(--success) 6%, transparent);
+}
+.dash-switch.tone-warning:has(.peer:checked) {
+    border-color: color-mix(in srgb, var(--warning) 45%, var(--hairline));
+    background-color: color-mix(in srgb, var(--warning) 7%, transparent);
+}
+.dash-switch.tone-danger:has(.peer:checked) {
+    border-color: color-mix(in srgb, var(--danger) 45%, var(--hairline));
+    background-color: color-mix(in srgb, var(--danger) 6%, transparent);
+}
+
+/* ---------------------------------------------------------------------------
+   Kehalusan & biaya render
+   --------------------------------------------------------------------------- */
+
+/* Blur berlapis mahal saat halaman digulir. Sidebar dan topbar dipromosikan
+   ke layer sendiri supaya tidak memicu repaint seluruh dokumen. */
+.dash-sidebar, .dash-topbar { will-change: transform; transform: translateZ(0); }
+
+/* Baris tabel di luar viewport tidak perlu dihitung tata letaknya. */
+.dash-table tbody tr { content-visibility: auto; contain-intrinsic-size: auto 52px; }
+
+/* Transisi tunggal yang konsisten untuk seluruh elemen interaktif; daftar
+   properti dibatasi supaya tidak ada `transition: all` yang memaksa
+   perhitungan ulang di properti yang tidak pernah berubah. */
+.dash-nav-link,
+.dash-input,
+.dash-badge,
+.dash-icon-btn {
+    transition-property: color, background-color, border-color, box-shadow, transform;
+    transition-duration: 160ms;
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tombol ikon baris tabel — satu bentuk untuk semua aksi. */
+.dash-icon-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 0.5rem;
+    color: var(--ink-soft);
+}
+.dash-icon-btn:hover { background-color: color-mix(in srgb, var(--ink) 8%, transparent); color: var(--ink); }
+.dash-icon-btn:active { transform: scale(0.94); }
+.dash-icon-btn:disabled { opacity: 0.3; pointer-events: none; }
+.dash-icon-btn.is-danger { color: var(--danger); }
+.dash-icon-btn.is-danger:hover { background-color: color-mix(in srgb, var(--danger) 10%, transparent); }
+.dash-icon-btn.is-primary { color: var(--primary); }
+.dash-icon-btn.is-primary:hover { background-color: color-mix(in srgb, var(--primary) 10%, transparent); }
+
+/* Fokus keyboard harus terlihat di setiap kontrol, bukan hanya input. */
+.dash-nav-link:focus-visible,
+.dash-icon-btn:focus-visible,
+.dash-switch:focus-within {
+    outline: 2px solid var(--primary);
+    outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-sidebar,
+    .dash-rail-label,
+    .dash-switch-thumb,
+    .dash-switch-track,
+    .dash-nav-link,
+    .dash-input,
+    .dash-icon-btn { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Rail sidebar: ciutkan, lebarkan, tooltip
+
+   Blok ini sengaja BERADA DI LUAR @layer components. Aturan tanpa layer selalu
+   mengalahkan @layer utilities milik Tailwind, sehingga `overflow-x-hidden`,
+   `gap-2.5`, dan `pb-1.5` di markup tidak lagi membatalkan aturan di sini.
+   Ketika blok ini masih berada di dalam layer, tooltip terpotong dan tombol
+   tutup drawer tetap terlihat di desktop.
+   --------------------------------------------------------------------------- */
+
+/* Semua yang berubah saat menciut dianimasikan: lebar rail, lebar label,
+   jarak antar elemen, dan padding konten — bukan display:none yang meloncat. */
+.dash-rail-label {
+    display: inline-block;
+    max-width: 12rem;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: max-width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 140ms ease;
+}
+
+.dash-rail-item,
+.dash-nav-link {
+    transition: color 0.2s ease, background-color 0.2s ease,
+                gap 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                padding 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.dash-section-label {
+    overflow: hidden;
+    transition: max-width 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                opacity 140ms ease,
+                height 220ms cubic-bezier(0.16, 1, 0.3, 1),
+                padding 220ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Tombol tutup drawer milik mobile saja. Diatur di sini, bukan lewat utility
+   `lg:hidden`, karena .dash-icon-btn tanpa layer akan memenangkan display-nya. */
+@media (min-width: 1024px) {
+    .dash-drawer-close { display: none; }
+
+    .is-collapsed .dash-sidebar { width: 72px; }
+
+    .is-collapsed .dash-rail-label { max-width: 0; opacity: 0; }
+
+    .is-collapsed .dash-section-label {
+        max-width: 0;
+        opacity: 0;
+        height: 0;
+        padding-top: 0;
+        padding-bottom: 0;
+    }
+
+    /* Jarak ikut menutup supaya ikonnya benar-benar di tengah rail 72px. */
+    .is-collapsed .dash-rail-item,
+    .is-collapsed .dash-nav-link { gap: 0; }
+
+    .is-collapsed .dash-nav-link {
+        justify-content: center;
+        padding-inline: 0.5rem;
+    }
+
+    /* Tooltip hanya hidup saat rail diciutkan — saat terbuka labelnya sudah
+       terbaca, jadi tidak perlu diulang. */
+    .is-collapsed .dash-rail-item { position: relative; }
+
+    .is-collapsed .dash-rail-item::after {
+        content: attr(data-rail-tip);
+        position: absolute;
+        left: calc(100% + 0.5rem);
+        top: 50%;
+        transform: translateY(-50%) translateX(-4px);
+        white-space: nowrap;
+        background-color: var(--ink);
+        color: var(--surface);
+        font-size: 0.6875rem;
+        line-height: 1;
+        padding: 0.4rem 0.55rem;
+        border-radius: 0.375rem;
+        box-shadow: 0 6px 18px rgb(0 0 0 / 0.18);
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 140ms ease, transform 140ms ease;
+        z-index: 60;
+    }
+
+    .is-collapsed .dash-rail-item:hover::after,
+    .is-collapsed .dash-rail-item:focus-visible::after {
+        opacity: 1;
+        transform: translateY(-50%) translateX(0);
+    }
+
+    /* Tooltip keluar dari kotak nav, jadi pemotongan horizontalnya dilepas
+       selama rail diciutkan. Isinya pendek, tidak butuh gulir. */
+    .is-collapsed .dash-sidebar nav { overflow: visible; }
+}
+
+/* Ciutkan rail hanya punya arti di desktop. Tanpa pengecualian ini, state yang
+   tersimpan dari desktop membuat drawer mobile terbuka selebar 72px dengan
+   semua labelnya tersembunyi. */
+@media (max-width: 1023px) {
+    .dash-sidebar { width: 260px; }
+    .is-collapsed .dash-rail-label { max-width: 12rem; opacity: 1; }
+    .is-collapsed .dash-section-label { max-width: 12rem; opacity: 1; }
+}
+
+/* Konten bergeser mengikuti lebar rail, dengan easing yang sama seperti sidebar
+   supaya keduanya bergerak sebagai satu benda. */
+.dash-main { transition: padding-left 220ms cubic-bezier(0.16, 1, 0.3, 1); }
+
+@media (min-width: 1024px) {
+    .dash-main { padding-left: 260px; }
+    .is-collapsed .dash-main { padding-left: 72px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-main { transition: none; }
+}
+
+/* ---------------------------------------------------------------------------
+   Dialog
+   --------------------------------------------------------------------------- */
+.dash-dialog-scrim {
+    background-color: rgb(0 0 0 / 0.5);
+    backdrop-filter: blur(3px);
+    -webkit-backdrop-filter: blur(3px);
+    animation: dash-fade 160ms ease both;
+}
+
+/* Panel naik sedikit sambil membesar — cukup untuk terbaca sebagai lapisan
+   baru, tidak cukup lama untuk terasa memperlambat. */
+/* Selector digandeng dengan .card supaya menang atas permukaan glass-nya:
+   panel di atas scrim gelap harus benar-benar solid, bukan translusen. */
+.dash-dialog-panel,
+.dash-dialog-panel.card {
+    background-color: var(--surface);
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+    border: 1px solid var(--hairline);
+    box-shadow: 0 24px 60px rgb(0 0 0 / 0.22);
+    animation: dash-dialog-in 200ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+@keyframes dash-fade {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+
+@keyframes dash-dialog-in {
+    from { opacity: 0; transform: translateY(8px) scale(0.98); }
+    to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .dash-dialog-scrim, .dash-dialog-panel { animation: none; }
+}
+
+/* Halaman di belakang dialog tidak boleh ikut tergulir. */
+body:has(.dash-dialog) { overflow: hidden; }
+
+/* Tab: pembeda hanya warna dan permukaan, tanpa perubahan bobot yang membuat
+   lebar teks bergeser saat berpindah tab. */
+.dash-tab {
+    border-radius: 0.5rem;
+    padding: 0.5rem 0.875rem;
+    font-size: 0.75rem;
+    font-weight: 400;
+    color: var(--ink-soft);
+    transition: color 160ms ease, background-color 160ms ease;
+}
+.dash-tab:hover { color: var(--ink); }
+.dash-tab.is-active {
+    background-color: var(--surface);
+    color: var(--primary);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.06);
+}
+.dash-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+/* ---------------------------------------------------------------------------
+   Side tabs — navigasi vertikal halaman Pengaturan
+   --------------------------------------------------------------------------- */
+.dash-side-tabs {
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+}
+
+.dash-side-tabs-heading {
+    font-family: var(--font-mono);
+    font-size: 0.625rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    padding: 0 0.75rem;
+    margin: 1rem 0 0.375rem;
+}
+.dash-side-tabs-heading:first-child { margin-top: 0; }
+
+.dash-side-tab {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+    width: 100%;
+    text-align: left;
+    border-radius: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.8125rem;
+    color: var(--ink-soft);
+    white-space: nowrap;
+    transition: color 160ms ease, background-color 160ms ease;
+}
+.dash-side-tab:hover {
+    color: var(--ink);
+    background-color: color-mix(in srgb, var(--ink) 4%, transparent);
+}
+.dash-side-tab.is-active {
+    color: var(--primary);
+    background-color: color-mix(in srgb, var(--primary) 10%, transparent);
+    font-weight: 500;
+}
+.dash-side-tab:focus-visible { outline: 2px solid var(--primary); outline-offset: 2px; }
+
+.dash-side-tab-icon {
+    width: 1rem;
+    font-size: 0.75rem;
+    text-align: center;
+    flex-shrink: 0;
+}
+
+/* Di layar sempit daftar yang sama menggulir mendatar; judul grup disembunyikan
+   supaya barisnya tetap pendek. */
+@media (max-width: 1023px) {
+    .dash-side-tabs {
+        flex-direction: row;
+        gap: 0.25rem;
+        overflow-x: auto;
+        scrollbar-width: none;
+        padding-bottom: 0.25rem;
+    }
+    .dash-side-tabs::-webkit-scrollbar { display: none; }
+    .dash-side-tabs-heading { display: none; }
+    .dash-side-tab { width: auto; }
+}

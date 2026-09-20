@@ -10,7 +10,7 @@ class TechStacks extends Component
     public function render()
     {
         return view('livewire.sections.tech-stacks', [
-            'techStacks' => ModelsTechStacks::all()
+            'techStacks' => ModelsTechStacks::all(),
         ]);
     }
 }
