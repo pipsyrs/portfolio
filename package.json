@@ -4,7 +4,7 @@
     "type": "module",
     "scripts": {
         "build": "vite build",
-        "dev": "concurrently -n \"VITE,SERVER,REVERB,QUEUE,SCHEDULER\" -c \"cyan,green,yellow\" \"vite\" \"php artisan serve\" \"php artisan reverb:start\" \"php artisan queue:work\" \"php artisan schedule:work\""
+        "dev": "concurrently -n \"VITE,SERVER,REVERB,QUEUE,SCHEDULER\" -c \"cyan,green,yellow,blue,orange\" \"vite\" \"php artisan serve\" \"php artisan reverb:start\" \"php artisan queue:work\" \"php artisan schedule:work\""
     },
     "devDependencies": {
         "@tailwindcss/vite": "^4.3.0",

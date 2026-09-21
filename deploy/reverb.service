@@ -1,0 +1,21 @@
+[Unit]
+Description=Laravel Reverb WebSocket Server
+After=network.target
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/portfolio
+ExecStart=/www/server/php/83/bin/php artisan reverb:start --host=127.0.0.1 --port=8080
+Restart=always
+RestartSec=5
+StandardOutput=append:/www/wwwroot/portfolio/storage/logs/reverb.log
+StandardError=append:/www/wwwroot/portfolio/storage/logs/reverb.log
+
+# Batas memori untuk VPS 1GB
+MemoryMax=192M
+LimitNOFILE=10000
+
+[Install]
+WantedBy=multi-user.target
