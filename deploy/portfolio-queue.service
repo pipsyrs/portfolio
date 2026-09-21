@@ -1,0 +1,21 @@
+[Unit]
+Description=Laravel Queue Worker (portfolio)
+After=network.target
+
+[Service]
+Type=simple
+User=www
+Group=www
+WorkingDirectory=/www/wwwroot/apiprs.my.id
+ExecStart=/www/server/php/85/bin/php artisan queue:work --sleep=3 --tries=3 --max-time=3600
+Restart=always
+RestartSec=5
+
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=portfolio-queue
+
+MemoryMax=128M
+
+[Install]
+WantedBy=multi-user.target
