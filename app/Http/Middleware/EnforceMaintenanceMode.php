@@ -4,6 +4,8 @@ namespace App\Http\Middleware;
 
 use Closure;
 use Illuminate\Http\Request;
+use Livewire\Livewire;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 use Symfony\Component\HttpFoundation\Response;
 
 /**
@@ -26,6 +28,13 @@ class EnforceMaintenanceMode
             return $next($request);
         }
 
+        // Request Livewire memakai routenya sendiri, sehingga pengecekan di atas
+        // tidak mengenalinya. Tanpa ini tombol di halaman login ikut diblokir
+        // dan pemilik terkunci di luar meski halamannya tampil.
+        if ($this->isDashboardLivewireRequest()) {
+            return $next($request);
+        }
+
         // Pemilik yang sudah login tetap melihat situs apa adanya — termasuk
         // request Livewire dari landing page — sehingga hasil perubahan bisa
         // diperiksa sebelum mode ini dimatikan. Untuk pengunjung biasa request
@@ -38,5 +47,28 @@ class EnforceMaintenanceMode
         return response()
             ->view('errors.503', [], 503)
             ->header('Retry-After', '3600');
+    }
+
+    /**
+     * Apakah request Livewire ini berasal dari halaman dashboard? Path asal
+     * dibaca dari snapshot komponen, bukan dari Referer yang bisa dipalsukan.
+     */
+    private function isDashboardLivewireRequest(): bool
+    {
+        if (! Livewire::isLivewireRequest()) {
+            return false;
+        }
+
+        try {
+            $route = app('router')->getRoutes()->match(
+                Request::create(Livewire::originalUrl())
+            );
+        } catch (HttpException) {
+            // Path asal dikirim oleh klien, jadi bisa saja tidak cocok dengan
+            // route mana pun. Perlakukan sebagai bukan dashboard.
+            return false;
+        }
+
+        return str_starts_with((string) $route->getName(), 'dashboard.');
     }
 }
