@@ -176,6 +176,13 @@ class Edit extends Component
         }
 
         [$this->careers[$index], $this->careers[$target]] = [$this->careers[$target], $this->careers[$index]];
+
+        // Logo yang baru dipilih terikat ke indeks, jadi harus ikut bertukar.
+        $logo = $this->careerLogos[$index] ?? null;
+        $targetLogo = $this->careerLogos[$target] ?? null;
+
+        $this->careerLogos[$index] = $targetLogo;
+        $this->careerLogos[$target] = $logo;
     }
 
     public function addCertification(): void
@@ -217,6 +224,9 @@ class Edit extends Component
             'about_extra_information.*.information' => ['nullable', 'string', 'max:255'],
 
             'careers' => ['array', 'max:30'],
+            // Path logo lama ikut divalidasi supaya tidak dibuang validated(),
+            // yang membuatnya terbaca sebagai berkas menggantung lalu dihapus.
+            'careers.*.logo' => ['nullable', 'string', 'max:255'],
             'careers.*.company' => ['required', 'string', 'max:150'],
             'careers.*.position' => ['required', 'string', 'max:150'],
             'careers.*.description' => ['nullable', 'string', 'max:10000'],
@@ -225,6 +235,7 @@ class Edit extends Component
             'careers.*.on_going' => ['boolean'],
 
             'certifications' => ['array', 'max:50'],
+            'certifications.*.file' => ['nullable', 'string', 'max:255'],
             'certifications.*.title' => ['required', 'string', 'max:200'],
             'certifications.*.issuer' => ['required', 'string', 'max:200'],
             'certifications.*.credential_id' => ['nullable', 'string', 'max:150'],

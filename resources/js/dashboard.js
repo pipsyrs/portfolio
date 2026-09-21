@@ -1,17 +1,11 @@
-import './echo';
-import Swal from 'sweetalert2';
-import {
-    Chart,
-    LineController,
-    LineElement,
-    PointElement,
-    LinearScale,
-    CategoryScale,
-    Filler,
-    Tooltip,
-} from 'chart.js';
-
-Chart.register(LineController, LineElement, PointElement, LinearScale, CategoryScale, Filler, Tooltip);
+/* -------------------------------------------------------------------------
+ * Modul berat (Echo/Pusher, SweetAlert2, Chart.js) dimuat saat benar-benar
+ * dipakai. Sebelumnya ketiganya ikut di bundel masuk setiap halaman dashboard
+ * walau halaman itu tidak punya chart dan tidak memunculkan toast sama sekali.
+ * ---------------------------------------------------------------------- */
+if (import.meta.env.VITE_REVERB_APP_KEY) {
+    import('./echo');
+}
 
 /* -------------------------------------------------------------------------
  * Token desain dibaca dari CSS custom property, sehingga toast dan chart
@@ -37,17 +31,27 @@ function hexToRgba(hex, alpha) {
 
 /* ---------------------------------- Toast -------------------------------- */
 
-const toast = Swal.mixin({
-    toast: true,
-    position: 'top-end',
-    showConfirmButton: false,
-    timer: 3600,
-    timerProgressBar: true,
-    didOpen: (el) => {
-        el.addEventListener('mouseenter', Swal.stopTimer);
-        el.addEventListener('mouseleave', Swal.resumeTimer);
-    },
-});
+let toastPromise = null;
+
+// SweetAlert2 baru diunduh saat toast pertama muncul; sesudah itu instance-nya
+// dipakai ulang lewat promise yang sama.
+function loadToast() {
+    if (!toastPromise) {
+        toastPromise = import('sweetalert2').then(({ default: Swal }) => Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3600,
+            timerProgressBar: true,
+            didOpen: (el) => {
+                el.addEventListener('mouseenter', Swal.stopTimer);
+                el.addEventListener('mouseleave', Swal.resumeTimer);
+            },
+        }));
+    }
+
+    return toastPromise;
+}
 
 window.dashToast = ({ type = 'success', message = '', title = null }) => {
     const iconColor =
@@ -56,14 +60,14 @@ window.dashToast = ({ type = 'success', message = '', title = null }) => {
         : type === 'warning' ? token('--warning', '#f59e0b')
         : token('--primary', '#38bdf8');
 
-    toast.fire({
+    loadToast().then((toast) => toast.fire({
         icon: type,
         title: title || message,
         text: title ? message : undefined,
         background: token('--surface', '#ffffff'),
         color: token('--ink', '#1a1f2b'),
         iconColor,
-    });
+    }));
 };
 
 /* ------------------------------ Tema gelap ------------------------------- */
@@ -161,13 +165,46 @@ window.addEventListener('online', () => {
 
 const charts = new Map();
 
-function initCharts() {
-    document.querySelectorAll('canvas[data-chart]').forEach((canvas) => {
+let chartPromise = null;
+
+// Chart.js hanya relevan di Beranda dan Pengunjung. Halaman lain tidak perlu
+// ikut mengunduhnya, jadi modulnya ditarik saat ada canvas yang memintanya.
+function loadChart() {
+    if (!chartPromise) {
+        chartPromise = import('chart.js').then((module) => {
+            module.Chart.register(
+                module.LineController,
+                module.LineElement,
+                module.PointElement,
+                module.LinearScale,
+                module.CategoryScale,
+                module.Filler,
+                module.Tooltip,
+            );
+
+            return module.Chart;
+        });
+    }
+
+    return chartPromise;
+}
+
+async function initCharts() {
+    const canvases = document.querySelectorAll('canvas[data-chart]');
+
+    if (canvases.length === 0) return;
+
+    const Chart = await loadChart();
+
+    canvases.forEach((canvas) => {
         const config = JSON.parse(canvas.dataset.chart);
 
         if (charts.has(canvas.id)) {
             charts.get(canvas.id).destroy();
         }
+
+        // Canvas bisa saja sudah dilepas Livewire selama modulnya diunduh.
+        if (!canvas.isConnected) return;
 
         const context = canvas.getContext('2d');
         const primary = token('--primary', '#38bdf8');
@@ -487,11 +524,32 @@ document.addEventListener('livewire:init', () => {
         }
     });
 
-    // Overlay penuh hanya untuk aksi yang memang lama (unggah besar, backup).
-    // Penandanya adalah elemen yang benar-benar diklik, bukan keberadaan
-    // atribut di mana pun dalam komponen — supaya tombol "Batal" di dialog
-    // yang sama tidak ikut memunculkan overlay.
-    Livewire.hook('commit', ({ succeed, fail }) => {
+    Livewire.hook('commit', ({ component, respond, succeed, fail }) => {
+        // Tombol yang memicu request ini ditandai sibuk sampai jawabannya
+        // datang, lalu dilepas. Satu tempat untuk seluruh dashboard, jadi
+        // tidak ada tombol yang terlewat.
+        //
+        // Tombolnya harus berada di dalam komponen yang mengirim commit ini,
+        // supaya request latar (wire:poll lonceng) tidak menandai tombol yang
+        // kebetulan baru saja diklik di komponen lain.
+        const trigger = pendingTrigger;
+
+        if (trigger && component.el?.contains(trigger)) {
+            pendingTrigger = null;
+
+            markBusy(trigger);
+
+            const done = () => clearBusy(trigger);
+
+            respond(done);
+            succeed(done);
+            fail(done);
+        }
+
+        // Overlay penuh hanya untuk aksi yang memang lama (unggah besar,
+        // backup). Penandanya adalah elemen yang benar-benar diklik, bukan
+        // keberadaan atribut di mana pun dalam komponen — supaya tombol
+        // "Batal" di dialog yang sama tidak ikut memunculkan overlay.
         if (!blockingClicked) return;
 
         blockingClicked = false;
@@ -502,12 +560,88 @@ document.addEventListener('livewire:init', () => {
     });
 });
 
+/* --------------------------- Tombol sedang sibuk -------------------------- */
+
 let blockingClicked = false;
+let pendingTrigger = null;
+
+const hasWireAttribute = (el, prefix) =>
+    Array.from(el.attributes).some((attribute) => attribute.name.startsWith(prefix));
+
+const busyTimers = new WeakMap();
+
+function markBusy(el) {
+    if (el.classList.contains('dash-busy')) return;
+
+    // Warna spinner dibaca sebelum teks tombol dibuat transparan, supaya
+    // cincinnya tetap kontras di tombol primary maupun secondary.
+    el.style.setProperty('--dash-busy-ink', getComputedStyle(el).color);
+    el.classList.add('dash-busy');
+
+    // Jaring pengaman: commit yang dibatalkan tidak memanggil balik apa pun,
+    // dan tombol yang terkunci selamanya jauh lebih buruk dari spinner hilang.
+    busyTimers.set(el, setTimeout(() => clearBusy(el), 20000));
+}
+
+function clearBusy(el) {
+    clearTimeout(busyTimers.get(el));
+    busyTimers.delete(el);
+
+    el.classList.remove('dash-busy');
+    el.style.removeProperty('--dash-busy-ink');
+}
+
+/**
+ * Elemen yang layak diberi status sibuk: tombol dengan wire:click, atau tombol
+ * submit milik form wire:submit. Tombol yang sudah punya indikator sendiri
+ * (wire:loading di dalamnya) dilewati supaya tidak ada dua spinner.
+ */
+function findTrigger(target) {
+    const el = target.closest('button, [role="tab"]');
+
+    if (!el || el.disabled || el.querySelector('[wire\:loading]')) return null;
+
+    if (hasWireAttribute(el, 'wire:click')) return el;
+
+    const form = el.form ?? el.closest('form');
+
+    if (el.type === 'submit' && form && hasWireAttribute(form, 'wire:submit')) return el;
+
+    return null;
+}
+
+function rememberTrigger(el) {
+    pendingTrigger = el;
+
+    // Klik yang ternyata tidak memicu request apa pun tidak boleh menempel dan
+    // ikut menandai commit berikutnya. Jedanya harus lebih panjang dari 5ms
+    // buffer Livewire, kalau tidak penandanya hilang sebelum commit dibuat.
+    setTimeout(() => {
+        if (pendingTrigger === el) pendingTrigger = null;
+    }, 120);
+}
 
 document.addEventListener('click', (event) => {
-    if (event.target instanceof Element && event.target.closest('[data-dash-blocking]')) {
+    if (!(event.target instanceof Element)) return;
+
+    if (event.target.closest('[data-dash-blocking]')) {
         blockingClicked = true;
     }
+
+    const trigger = findTrigger(event.target);
+
+    if (trigger) rememberTrigger(trigger);
+}, true);
+
+// Submit lewat tombol Enter tidak melewati handler klik di atas.
+document.addEventListener('submit', (event) => {
+    const form = event.target;
+
+    if (!(form instanceof HTMLFormElement) || !hasWireAttribute(form, 'wire:submit')) return;
+
+    const button = form.querySelector('button[type="submit"]:not([disabled])');
+
+    if (button && !button.querySelector('[wire\:loading]')) rememberTrigger(button);
 }, true);
 
 document.addEventListener('livewire:navigate', () => showOverlay());
@@ -542,7 +676,8 @@ document.addEventListener('alpine:init', () => {
 
         load() {
             if (document.getElementById('recaptcha-script')) {
-                this.ready = true;
+                // Tag-nya sudah ada, tapi belum tentu selesai dimuat.
+                this.ready = typeof window.grecaptcha !== 'undefined';
                 this.watchSubmit();
 
                 return;
@@ -554,6 +689,12 @@ document.addEventListener('alpine:init', () => {
             script.async = true;
             script.defer = true;
             script.onload = () => { this.ready = true; };
+            // Skrip Google diblokir atau jaringan putus. Dicatat supaya kegagalan
+            // ini tidak menyamar sebagai form yang diam tanpa sebab.
+            script.onerror = () => {
+                this.ready = false;
+                console.warn('reCAPTCHA: skrip Google tidak dapat dimuat.');
+            };
 
             document.head.appendChild(script);
             this.watchSubmit();
@@ -586,13 +727,29 @@ document.addEventListener('alpine:init', () => {
             }
 
             return new Promise((resolve) => {
-                window.grecaptcha.ready(() => {
-                    window.grecaptcha
-                        .execute(siteKey, { action: 'login' })
-                        .then((token) => this.$wire.set('recaptchaToken', token, false))
-                        .catch(() => {})
-                        .finally(resolve);
-                });
+                // Apa pun yang terjadi di bawah, submit harus tetap dilanjutkan.
+                // Promise yang menggantung akan membuat tombol Masuk diam total.
+                const timer = setTimeout(resolve, 8000);
+                const done = () => { clearTimeout(timer); resolve(); };
+
+                try {
+                    window.grecaptcha.ready(() => {
+                        try {
+                            // grecaptcha.execute() mengembalikan thenable miliknya
+                            // sendiri, bukan Promise asli: ada .then() tapi tidak ada
+                            // .finally(). Dibungkus Promise.resolve() supaya rantainya
+                            // kembali jadi promise standar.
+                            Promise.resolve(window.grecaptcha.execute(siteKey, { action: 'login' }))
+                                .then((token) => this.$wire.set('recaptchaToken', token, false))
+                                .catch(() => {})
+                                .finally(done);
+                        } catch (error) {
+                            done();
+                        }
+                    });
+                } catch (error) {
+                    done();
+                }
             });
         },
     }));

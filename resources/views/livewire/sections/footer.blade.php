@@ -1,55 +1,108 @@
-<footer class="pt-16 pb-8" style="border-top: 1px solid var(--hairline);">
-    <div class="container mx-auto px-6 md:px-12 lg:px-24">
-        <div class="flex flex-col md:flex-row justify-between items-center md:items-start mb-12">
-            <!-- Brand -->
-            <div class="mb-8 md:mb-0 text-center md:text-left">
-                <a href="#" class="text-lg font-bold tracking-tight inline-block mb-4" style="color: var(--ink);">
-                    PORT<span style="color: var(--primary);">FOLIO</span>
-                </a>
-                <p class="text-sm max-w-xs mx-auto md:mx-0 leading-relaxed" style="color: var(--ink-soft);">
-                    {!! bt('Building digital experiences that combine beautiful design with elegant code.') !!}
-                </p>
+@php
+    $socials = collect([
+        ['link' => settings('github_link'), 'icon' => 'fab fa-github', 'label' => 'GitHub'],
+        ['link' => settings('linkedin_link'), 'icon' => 'fab fa-linkedin-in', 'label' => 'LinkedIn'],
+        ['link' => settings('x_twitter_link'), 'icon' => 'fab fa-x-twitter', 'label' => 'X'],
+        ['link' => settings('instagram_link'), 'icon' => 'fab fa-instagram', 'label' => 'Instagram'],
+        ['link' => settings('youtube_link'), 'icon' => 'fab fa-youtube', 'label' => 'YouTube'],
+        ['link' => settings('tiktok_link'), 'icon' => 'fab fa-tiktok', 'label' => 'TikTok'],
+        ['link' => settings('facebook_link'), 'icon' => 'fab fa-facebook-f', 'label' => 'Facebook'],
+    ])->filter(fn (array $social) => filled($social['link']));
+@endphp
+
+<footer class="lp-section lp-section--tight" style="border-block-start: 1px solid var(--hairline);">
+    <div class="lp-shell">
+        <div class="footer-top-row">
+            <div>
+                <p class="footer-name">{{ $user->name ?? 'Portfolio' }}<i>.</i></p>
+                @if ($user->specialis)
+                    <p class="lp-meta mt-3">{{ $user->specialis }}</p>
+                @endif
             </div>
 
-            <!-- Social Links -->
-            @if (settings('youtube_link') || settings('linkedin_link') || settings('instagram_link') || settings('github_link') || settings('tiktok_link') || settings('facebook_link') || settings('x_twitter_link'))
-                <div class="text-center md:text-right">
-                    <h4 class="font-semibold mb-4 text-sm uppercase tracking-wider" style="color: var(--ink);">{!! bt('Connect') !!}</h4>
-                    <div class="flex space-x-3 justify-center md:justify-end">
-                        @php
-                            $socials = [
-                                ['link' => settings('youtube_link'), 'icon' => 'fab fa-youtube', 'label' => 'YouTube'],
-                                ['link' => settings('linkedin_link'), 'icon' => 'fab fa-linkedin-in', 'label' => 'LinkedIn'],
-                                ['link' => settings('instagram_link'), 'icon' => 'fab fa-instagram', 'label' => 'Instagram'],
-                                ['link' => settings('github_link'), 'icon' => 'fab fa-github', 'label' => 'GitHub'],
-                                ['link' => settings('tiktok_link'), 'icon' => 'fab fa-tiktok', 'label' => 'TikTok'],
-                                ['link' => settings('facebook_link'), 'icon' => 'fab fa-facebook-f', 'label' => 'Facebook'],
-                                ['link' => settings('x_twitter_link'), 'icon' => 'fab fa-twitter', 'label' => 'X'],
-                            ];
-                        @endphp
-                        @foreach($socials as $social)
-                            @if($social['link'])
-                                <a href="{{ $social['link'] }}" target="_blank" rel="noopener noreferrer" aria-label="{{ $social['label'] }}" class="w-10 h-10 rounded-xl flex items-center justify-center transition-all duration-200 hover:-translate-y-0.5" style="background-color: var(--surface-alt); border: 1px solid var(--hairline); color: var(--ink-soft);" onmouseenter="this.style.backgroundColor='var(--primary)'; this.style.color='#fff'; this.style.borderColor='var(--primary)';" onmouseleave="this.style.backgroundColor='var(--surface-alt)'; this.style.color='var(--ink-soft)'; this.style.borderColor='var(--hairline)';">
-                                    <i class="{{ $social['icon'] }}"></i>
+            @if ($socials->isNotEmpty())
+                <div>
+                    <p class="lp-meta mb-3">{!! bt('Connect') !!}</p>
+                    <ul class="flex flex-wrap gap-2">
+                        @foreach ($socials as $social)
+                            <li>
+                                <a href="{{ $social['link'] }}" target="_blank" rel="noopener noreferrer"
+                                   class="lp-icon-btn footer-social" aria-label="{{ $social['label'] }}">
+                                    <i class="{{ $social['icon'] }}" aria-hidden="true"></i>
                                 </a>
-                            @endif
+                            </li>
                         @endforeach
-                    </div>
+                    </ul>
                 </div>
             @endif
         </div>
 
-        <!-- Security note -->
-        <div class="mono inline-flex items-center gap-2 px-3.5 py-2 rounded-lg mb-8 text-xs" style="background-color: color-mix(in srgb, var(--primary) 8%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent); color: var(--ink-soft);">
-            <i class="fas fa-lock" style="color: var(--primary);"></i>
-            <span class="i18n-en">Assets & files are served through signed, time-limited URLs — nothing here is public by accident.</span>
-            <span class="i18n-id">Aset & file disajikan lewat URL bertanda tangan yang punya masa berlaku — tidak ada yang publik secara tidak sengaja.</span>
-        </div>
-
-        <!-- Copyright -->
-        <div class="pt-8 flex flex-col md:flex-row justify-between items-center text-sm gap-2" style="border-top: 1px solid var(--hairline); color: var(--ink-soft);">
+        <div class="footer-base">
             <p>&copy; {{ date('Y') }} {{ $user->name }}. {!! bt('All Rights Reserved.') !!}</p>
-            <span>{!! bt('Thanks for checking out my portfolio!') !!}</span>
+            <a href="#hero" class="footer-top">
+                <i class="fas fa-arrow-up" aria-hidden="true"></i>
+                {!! bt('Back to top') !!}
+            </a>
         </div>
     </div>
 </footer>
+
+<style>
+    .footer-top-row {
+        display: flex;
+        flex-direction: column;
+        gap: 2.5rem;
+    }
+
+    /* Nama ditutup sebesar pembukanya, jadi halaman terasa punya bingkai. */
+    .footer-name {
+        font-weight: 800;
+        letter-spacing: -0.045em;
+        line-height: 0.95;
+        color: var(--ink);
+        font-size: clamp(2.25rem, 7vw, 4.5rem);
+        overflow-wrap: break-word;
+    }
+    .footer-name i { font-style: normal; color: var(--accent-text); }
+
+    .footer-social { transition: background-color 0.24s var(--ease-out), color 0.24s var(--ease-out), border-color 0.24s var(--ease-out), transform 0.24s var(--ease-out); }
+    .footer-social:hover {
+        background-color: var(--primary);
+        border-color: var(--primary);
+        color: var(--on-primary);
+        transform: translateY(-3px);
+    }
+
+    .footer-base {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem 1.5rem;
+        margin-block-start: clamp(2.5rem, 6vw, 4rem);
+        padding-block-start: 1.5rem;
+        border-block-start: 1px solid var(--rule);
+        font-size: 0.8125rem;
+        color: var(--ink-soft);
+    }
+    .footer-top {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        min-block-size: 44px;
+        font-weight: 600;
+        color: var(--accent-text);
+        transition: gap 0.24s var(--ease-out);
+    }
+    .footer-top i { font-size: 0.6875rem; }
+    .footer-top:hover { gap: 0.75rem; text-decoration: underline; text-underline-offset: 3px; }
+
+    @media (min-width: 768px) {
+        .footer-top-row { flex-direction: row; align-items: flex-start; justify-content: space-between; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .footer-social:hover { transform: none; }
+        .footer-top, .footer-top:hover { transition: none; gap: 0.5rem; }
+    }
+</style>

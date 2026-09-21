@@ -7,6 +7,7 @@
         'hero' => 'sections.hero',
         'about' => 'sections.about',
         'tech' => 'sections.tech-stacks',
+        'security' => null,
         'specialis' => 'sections.specialis',
         'careers' => 'sections.careers',
         'certifications' => 'sections.certifications',
@@ -14,7 +15,13 @@
         'contact' => 'sections.contact',
     ] as $key => $component)
         @if (settings()->sectionEnabled($key))
-            @livewire($component, [], $key)
+            @if ($component === null)
+                {{-- Keamanan tidak menyentuh basis data, jadi ia hanya komponen
+                     Blade statis — tanpa komponen Livewire yang kosong isinya. --}}
+                <x-landing.security />
+            @else
+                @livewire($component, [], $key)
+            @endif
         @endif
     @endforeach
 

@@ -110,9 +110,12 @@ class UpdateProfile
         $existing = collect(is_array($user->careers) ? $user->careers : [])->pluck('logo')->filter()->all();
         $kept = [];
 
-        $result = collect($rows)->values()->map(function (array $row, int $index) use ($logos, &$kept) {
+        $result = collect($rows)->values()->map(function (array $row, int $index) use ($logos, $existing, &$kept) {
             $onGoing = (bool) ($row['on_going'] ?? false);
-            $logo = $row['logo'] ?? null;
+
+            // Properti Livewire bisa diubah dari sisi klien, jadi path lama
+            // hanya diterima bila memang sudah tercatat milik pengguna ini.
+            $logo = in_array($row['logo'] ?? null, $existing, true) ? $row['logo'] : null;
 
             if (($logos[$index] ?? null) instanceof TemporaryUploadedFile) {
                 $logo = $this->uploads->image($logos[$index], 'careers-logo');
@@ -154,9 +157,9 @@ class UpdateProfile
         $existing = collect(is_array($user->certifications) ? $user->certifications : [])->pluck('file')->filter()->all();
         $kept = [];
 
-        $result = collect($rows)->values()->map(function (array $row, int $index) use ($uploads, &$kept) {
+        $result = collect($rows)->values()->map(function (array $row, int $index) use ($uploads, $existing, &$kept) {
             $noExpiry = (bool) ($row['no_expiry'] ?? false);
-            $file = $row['file'] ?? null;
+            $file = in_array($row['file'] ?? null, $existing, true) ? $row['file'] : null;
 
             if (($uploads[$index] ?? null) instanceof TemporaryUploadedFile) {
                 $file = $this->uploads->document($uploads[$index], 'certifications');

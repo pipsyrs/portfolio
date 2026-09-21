@@ -1,133 +1,254 @@
-<section id="contact" class="py-24 md:py-28">
-    <div class="container mx-auto px-6 md:px-12 lg:px-24">
-        <!-- Section Header -->
-        <div class="mb-14" data-aos="fade-up">
-            <p class="eyebrow mb-2"><span class="section-num">07</span> {!! bt('Contact') !!}</p>
-            <h2 class="text-3xl md:text-4xl font-semibold" style="color: var(--ink);">
-                {!! bt('Get In') !!} {!! bt('Touch') !!}
-            </h2>
-            <p class="mt-3 max-w-2xl text-base md:text-lg" style="color: var(--ink-soft);">{!! bt('Have a project in mind or just want to say hi? Feel free to reach out!') !!}</p>
-        </div>
+@php
+    $channels = collect([
+        [
+            'icon' => 'fas fa-envelope',
+            'label_en' => 'Email', 'label_id' => 'Email',
+            'value' => $email,
+            'href' => filled($email) ? 'mailto:'.$email : null,
+        ],
+        [
+            'icon' => 'fa-brands fa-whatsapp',
+            'label_en' => 'Phone', 'label_id' => 'Telepon',
+            'value' => $phone,
+            'href' => filled($phone) ? 'tel:'.preg_replace('/[^0-9+]/', '', $phone) : null,
+        ],
+        [
+            'icon' => 'fa-solid fa-location-dot',
+            'label_en' => 'Based in', 'label_id' => 'Berlokasi di',
+            'value' => $address,
+            'href' => null,
+        ],
+    ])->filter(fn (array $channel) => filled($channel['value']));
+@endphp
 
-        <!-- Flash Messages -->
-        @if (session()->has('contact-success'))
-            <div class="max-w-3xl mb-8 mx-auto" x-data="{ show: true }" x-show="show" x-transition.opacity.duration.300ms>
-                <div class="flex items-center justify-between p-4 rounded-2xl" style="background-color: color-mix(in srgb, #10b981 10%, transparent); border: 1px solid color-mix(in srgb, #10b981 25%, transparent);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: color-mix(in srgb, #10b981 18%, transparent);">
-                            <i class="fas fa-check-circle text-emerald-600"></i>
-                        </div>
-                        <p class="text-sm font-medium text-emerald-700 dark:text-emerald-300">{{ session('contact-success') }}</p>
-                    </div>
-                    <button type="button" @click="show = false" class="w-8 h-8 flex items-center justify-center rounded-lg text-emerald-600 dark:text-emerald-300 hover:opacity-70 transition-opacity shrink-0 ml-4">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        @endif
+<section id="contact" class="lp-section lp-section--open">
+    <div class="lp-shell">
+        <div class="grid lg:grid-cols-12 gap-x-14 gap-y-12">
 
-        @if (session()->has('contact-error'))
-            <div class="max-w-3xl mb-8" x-data="{ show: true }" x-show="show" x-transition.opacity.duration.300ms>
-                <div class="flex items-center justify-between p-4 rounded-2xl" style="background-color: color-mix(in srgb, #ef4444 10%, transparent); border: 1px solid color-mix(in srgb, #ef4444 25%, transparent);">
-                    <div class="flex items-center gap-3">
-                        <div class="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style="background-color: color-mix(in srgb, #ef4444 18%, transparent);">
-                            <i class="fas fa-exclamation-circle text-red-600"></i>
-                        </div>
-                        <p class="text-sm font-medium text-red-700 dark:text-red-300">{{ session('contact-error') }}</p>
-                    </div>
-                    <button type="button" @click="show = false" class="w-8 h-8 flex items-center justify-center rounded-lg text-red-600 dark:text-red-300 hover:opacity-70 transition-opacity shrink-0 ml-4">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
-            </div>
-        @endif
+            <div class="lg:col-span-5">
+                <div class="lg:sticky" style="top: calc(var(--nav-h) + 2rem);">
+                    <p class="lp-slug" data-reveal>
+                        <span class="idx">08</span>
+                        <span class="i18n-en">Contact</span><span class="i18n-id">Kontak</span>
+                    </p>
 
-        <div class="flex flex-col lg:flex-row gap-8">
-            <!-- Contact Info -->
-            <div class="w-full lg:w-1/3 space-y-4">
-                <div class="card card-hover p-6 rounded-2xl flex items-start space-x-4">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background-color: color-mix(in srgb, var(--primary) 10%, transparent);">
-                        <i class="fas fa-envelope text-lg" style="color: var(--primary);"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-base mb-1" style="color: var(--ink);">{!! bt('Email Address') !!}</h4>
-                        <p class="text-sm" style="color: var(--ink-soft);">{{ $email ?? '-' }}</p>
-                    </div>
-                </div>
+                    <h2 class="lp-h2 mt-6" data-reveal style="--reveal-delay:60ms">
+                        <span class="i18n-en">Tell me about the work</span><span class="i18n-id">Ceritakan pekerjaannya</span>
+                    </h2>
 
-                <div class="card card-hover p-6 rounded-2xl flex items-start space-x-4">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background-color: color-mix(in srgb, var(--primary) 10%, transparent);">
-                        <i class="fa-solid fa-location-dot text-lg" style="color: var(--primary);"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-base mb-1" style="color: var(--ink);">{!! bt('Address') !!}</h4>
-                        <p class="text-sm" style="color: var(--ink-soft);">{{ $address ?? '-' }}</p>
-                    </div>
-                </div>
+                    <p class="lp-lead mt-5" data-reveal style="--reveal-delay:100ms">
+                        <span class="i18n-en">Send the details and I will reply from the inbox below.</span><span class="i18n-id">Kirim detailnya dan saya balas lewat kotak masuk di bawah.</span>
+                    </p>
 
-                <div class="card card-hover p-6 rounded-2xl flex items-start space-x-4">
-                    <div class="w-12 h-12 rounded-2xl flex items-center justify-center shrink-0" style="background-color: color-mix(in srgb, var(--primary) 10%, transparent);">
-                        <i class="fa-brands fa-whatsapp text-lg" style="color: var(--primary);"></i>
-                    </div>
-                    <div>
-                        <h4 class="font-semibold text-base mb-1" style="color: var(--ink);">{!! bt('Phone Number') !!}</h4>
-                        <p class="text-sm" style="color: var(--ink-soft);">{{ $phone ?? '-' }}</p>
-                    </div>
+                    @if ($channels->isNotEmpty())
+                        <dl class="contact-list" data-reveal style="--reveal-delay:140ms">
+                            @foreach ($channels as $channel)
+                                <div class="contact-cell">
+                                    <span class="contact-icon" aria-hidden="true">
+                                        <i class="{{ $channel['icon'] }}"></i>
+                                    </span>
+                                    <div class="contact-text">
+                                        <dt class="lp-meta">
+                                            <span class="i18n-en">{{ $channel['label_en'] }}</span><span class="i18n-id">{{ $channel['label_id'] }}</span>
+                                        </dt>
+                                        <dd class="contact-value">
+                                            @if ($channel['href'])
+                                                <a href="{{ $channel['href'] }}">{{ $channel['value'] }}</a>
+                                            @else
+                                                {{ $channel['value'] }}
+                                            @endif
+                                        </dd>
+                                    </div>
+                                </div>
+                            @endforeach
+                        </dl>
+                    @endif
                 </div>
             </div>
 
-            <!-- Contact Form -->
-            <div class="w-full lg:w-2/3">
-                <form wire:submit="sendMessage" class="card p-8 md:p-10 rounded-2xl space-y-6">
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <label for="contact-name" class="text-sm font-medium" style="color: var(--ink);">{!! bt('Name') !!}</label>
-                            <input wire:model="name" type="text" id="contact-name" class="w-full rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 transition-all i18n-placeholder" data-ph-en="{{ bt_variant('Insert your name', 'en') }}" data-ph-id="{{ bt_variant('Insert your name', 'id') }}" style="background-color: var(--surface-alt); border: 1px solid {{ $errors->has('name') ? '#f87171' : 'var(--hairline)' }}; color: var(--ink); --tw-ring-color: color-mix(in srgb, var(--primary) 25%, transparent);" placeholder="{{ __('Insert your name') }}">
-                            @error('name')
-                                <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                    <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                                </p>
-                            @enderror
+            <div class="lg:col-span-7">
+                @if (session()->has('contact-success'))
+                    <div class="contact-note is-ok" role="status" x-data="{ show: true }" x-show="show" x-transition.opacity.duration.300ms>
+                        <i class="fas fa-circle-check mt-0.5" aria-hidden="true"></i>
+                        <p>{{ session('contact-success') }}</p>
+                        <button type="button" @click="show = false" class="contact-note-x">
+                            <i class="fas fa-xmark" aria-hidden="true"></i>
+                            <span class="sr-only">{{ bt_variant('Close', app()->getLocale()) }}</span>
+                        </button>
+                    </div>
+                @endif
+
+                @if (session()->has('contact-error'))
+                    <div class="contact-note is-bad" role="alert" x-data="{ show: true }" x-show="show" x-transition.opacity.duration.300ms>
+                        <i class="fas fa-circle-exclamation mt-0.5" aria-hidden="true"></i>
+                        <p>{{ session('contact-error') }}</p>
+                        <button type="button" @click="show = false" class="contact-note-x">
+                            <i class="fas fa-xmark" aria-hidden="true"></i>
+                            <span class="sr-only">{{ bt_variant('Close', app()->getLocale()) }}</span>
+                        </button>
+                    </div>
+                @endif
+
+                <form wire:submit="sendMessage" class="contact-form lp-card" data-reveal>
+                    <div class="grid sm:grid-cols-2 gap-5">
+                        <div class="lp-field">
+                            <label for="contact-name">{!! bt('Name') !!}</label>
+                            <input wire:model="name" type="text" id="contact-name" autocomplete="name"
+                                   class="i18n-placeholder @error('name') has-error @enderror"
+                                   data-ph-en="{{ bt_variant('Your name', 'en') }}" data-ph-id="{{ bt_variant('Your name', 'id') }}"
+                                   placeholder="{{ __('Your name') }}">
+                            @error('name') <p class="lp-field-error">{{ $message }}</p> @enderror
                         </div>
-                        <div class="space-y-2">
-                            <label for="contact-email" class="text-sm font-medium" style="color: var(--ink);">{!! bt('Email Address') !!}</label>
-                            <input wire:model="senderEmail" type="email" id="contact-email" class="w-full rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 transition-all i18n-placeholder" data-ph-en="{{ bt_variant('Insert your email', 'en') }}" data-ph-id="{{ bt_variant('Insert your email', 'id') }}" style="background-color: var(--surface-alt); border: 1px solid {{ $errors->has('senderEmail') ? '#f87171' : 'var(--hairline)' }}; color: var(--ink); --tw-ring-color: color-mix(in srgb, var(--primary) 25%, transparent);" placeholder="{{ __('Insert your email') }}">
-                            @error('senderEmail')
-                                <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                    <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                                </p>
-                            @enderror
+
+                        <div class="lp-field">
+                            <label for="contact-email">{!! bt('Email Address') !!}</label>
+                            <input wire:model="senderEmail" type="email" id="contact-email" autocomplete="email"
+                                   class="i18n-placeholder @error('senderEmail') has-error @enderror"
+                                   data-ph-en="you@example.com" data-ph-id="anda@contoh.com"
+                                   placeholder="you@example.com">
+                            @error('senderEmail') <p class="lp-field-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
-                    <div class="space-y-2">
-                        <label for="contact-subject" class="text-sm font-medium" style="color: var(--ink);">{!! bt('Subject') !!}</label>
-                        <input wire:model="subject" type="text" id="contact-subject" class="w-full rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 transition-all i18n-placeholder" data-ph-en="{{ bt_variant('Project details', 'en') }}" data-ph-id="{{ bt_variant('Project details', 'id') }}" style="background-color: var(--surface-alt); border: 1px solid {{ $errors->has('subject') ? '#f87171' : 'var(--hairline)' }}; color: var(--ink); --tw-ring-color: color-mix(in srgb, var(--primary) 25%, transparent);" placeholder="{{ __('Project details') }}">
-                        @error('subject')
-                            <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                            </p>
-                        @enderror
+
+                    <div class="lp-field">
+                        <label for="contact-subject">{!! bt('Subject') !!}</label>
+                        <input wire:model="subject" type="text" id="contact-subject"
+                               class="i18n-placeholder @error('subject') has-error @enderror"
+                               data-ph-en="{{ bt_variant('What the work is about', 'en') }}" data-ph-id="{{ bt_variant('What the work is about', 'id') }}"
+                               placeholder="{{ __('What the work is about') }}">
+                        @error('subject') <p class="lp-field-error">{{ $message }}</p> @enderror
                     </div>
-                    <div class="space-y-2">
-                        <label for="contact-message" class="text-sm font-medium" style="color: var(--ink);">{!! bt('Message') !!}</label>
-                        <textarea wire:model="message" id="contact-message" rows="5" class="w-full rounded-xl px-4 py-3.5 focus:outline-none focus:ring-2 transition-all resize-none i18n-placeholder" data-ph-en="{{ bt_variant('Write your project details...', 'en') }}" data-ph-id="{{ bt_variant('Write your project details...', 'id') }}" style="background-color: var(--surface-alt); border: 1px solid {{ $errors->has('message') ? '#f87171' : 'var(--hairline)' }}; color: var(--ink); --tw-ring-color: color-mix(in srgb, var(--primary) 25%, transparent);" placeholder="{{ __('Write your project details...') }}"></textarea>
-                        @error('message')
-                            <p class="text-red-500 text-xs mt-1 flex items-center gap-1">
-                                <i class="fas fa-exclamation-circle text-[10px]"></i> {{ $message }}
-                            </p>
-                        @enderror
+
+                    <div class="lp-field">
+                        <label for="contact-message">{!! bt('Message') !!}</label>
+                        <textarea wire:model="message" id="contact-message" rows="6"
+                                  class="i18n-placeholder @error('message') has-error @enderror"
+                                  data-ph-en="{{ bt_variant('Scope, timeline, budget, whatever you already know', 'en') }}"
+                                  data-ph-id="{{ bt_variant('Scope, timeline, budget, whatever you already know', 'id') }}"
+                                  placeholder="{{ __('Scope, timeline, budget, whatever you already know') }}"></textarea>
+                        @error('message') <p class="lp-field-error">{{ $message }}</p> @enderror
                     </div>
-                    <button type="submit" class="magnetic btn-primary w-full sm:w-auto px-8 py-4 rounded-xl inline-flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed cursor-pointer" wire:loading.attr="disabled">
-                        <svg wire:loading wire:target="sendMessage" class="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+
+                    <button type="submit" class="lp-btn lp-btn-primary w-full sm:w-auto sm:self-start" wire:loading.attr="disabled" wire:target="sendMessage">
+                        <svg wire:loading wire:target="sendMessage" class="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" aria-hidden="true">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                         </svg>
                         <span wire:loading.remove wire:target="sendMessage">{!! bt('Send Message') !!}</span>
                         <span wire:loading wire:target="sendMessage">{!! bt('Sending...') !!}</span>
-                        <i wire:loading.remove wire:target="sendMessage" class="fas fa-paper-plane"></i>
                     </button>
                 </form>
             </div>
         </div>
     </div>
 </section>
+
+<style>
+    .contact-list {
+        display: grid;
+        gap: 0.6rem;
+        margin-block-start: 2.5rem;
+    }
+    .contact-cell {
+        display: flex;
+        align-items: center;
+        gap: 0.85rem;
+        padding: 0.9rem 1rem;
+        border: 1px solid var(--hairline);
+        border-radius: var(--r-ctl);
+        background-color: var(--surface-alt);
+        box-shadow: var(--inner-lift);
+        transition: border-color 0.24s var(--ease-out);
+    }
+    .contact-cell:hover { border-color: color-mix(in srgb, var(--primary) 45%, var(--hairline)); }
+    .contact-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        inline-size: 40px;
+        block-size: 40px;
+        flex: none;
+        border-radius: 11px;
+        border: 1px solid var(--hairline);
+        background-color: var(--surface);
+        color: var(--accent-text);
+        font-size: 0.9375rem;
+    }
+    .contact-text { min-inline-size: 0; }
+    .contact-value {
+        margin-block-start: 0.15rem;
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--ink);
+        overflow-wrap: anywhere;
+    }
+    .contact-value a { color: var(--ink); }
+    .contact-value a:hover { color: var(--accent-text); text-decoration: underline; text-underline-offset: 3px; }
+
+    .contact-note {
+        display: flex;
+        align-items: flex-start;
+        gap: 0.85rem;
+        margin-block-end: 1.5rem;
+        padding: 1rem 1.1rem;
+        border-radius: var(--r-card);
+        font-size: 0.875rem;
+        line-height: 1.5;
+    }
+    .contact-note p { flex: 1; min-inline-size: 0; }
+    .contact-note.is-ok {
+        background-color: color-mix(in srgb, var(--success) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--success) 32%, transparent);
+        color: color-mix(in srgb, var(--success) 45%, var(--ink));
+    }
+    .contact-note.is-bad {
+        background-color: color-mix(in srgb, var(--danger) 12%, transparent);
+        border: 1px solid color-mix(in srgb, var(--danger) 32%, transparent);
+        color: color-mix(in srgb, var(--danger) 55%, var(--ink));
+    }
+    .contact-note-x {
+        inline-size: 32px;
+        block-size: 32px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: var(--r-tag);
+        flex: none;
+    }
+
+    .contact-form {
+        display: flex;
+        flex-direction: column;
+        gap: 1.25rem;
+        padding: clamp(1.25rem, 4vw, 2.25rem);
+        border-radius: var(--r-slab);
+        box-shadow: var(--shadow-md), inset 0 1px 0 var(--glass-sheen);
+    }
+
+    .lp-field { display: flex; flex-direction: column; gap: 0.45rem; min-inline-size: 0; }
+    .lp-field label { font-size: 0.8125rem; font-weight: 600; color: var(--ink); }
+    .lp-field input,
+    .lp-field textarea {
+        inline-size: 100%;
+        min-block-size: 50px;
+        padding: 0.85rem 1rem;
+        border-radius: var(--r-ctl);
+        border: 1px solid var(--hairline);
+        background-color: var(--surface);
+        color: var(--ink);
+        font-size: 0.9375rem;
+        transition: border-color 0.2s var(--ease-out), box-shadow 0.2s var(--ease-out);
+    }
+    .lp-field textarea { resize: vertical; line-height: 1.6; }
+    .lp-field input:hover,
+    .lp-field textarea:hover { border-color: var(--ink-soft); }
+    .lp-field input:focus,
+    .lp-field textarea:focus {
+        outline: none;
+        border-color: var(--primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--primary) 16%, transparent);
+    }
+    .lp-field input.has-error,
+    .lp-field textarea.has-error { border-color: var(--danger); }
+    .lp-field-error { font-size: 0.75rem; color: var(--danger); }
+</style>

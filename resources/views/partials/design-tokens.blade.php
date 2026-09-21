@@ -15,6 +15,10 @@
         --glass-border: rgba(15, 23, 42, 0.09);
         --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
 
+        --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+        --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+        --ease-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
         --success: #10b981;
         --danger: #ef4444;
         --warning: #f59e0b;
@@ -40,7 +44,7 @@
         transition: background-color 0.25s ease, color 0.25s ease;
     }
 
-    /* Tekstur grid "blueprint" di belakang segalanya — fixed dan di-mask radial
+    /* Tekstur grid "blueprint" di belakang segalanya: fixed dan di-mask radial
        supaya terbaca sebagai kedalaman ambient, bukan noise. */
     #bg-grid {
         position: fixed;
@@ -56,7 +60,7 @@
     }
 
     /* Kedua varian bahasa dirender server-side, CSS hanya menyembunyikan salah
-       satu — pergantian instan tanpa render ulang. Lihat bt() di helper.php. */
+       satu, jadi pergantian instan tanpa render ulang. Lihat bt() di helper.php. */
     html[data-locale="id"] .i18n-en { display: none; }
     html:not([data-locale="id"]) .i18n-id { display: none; }
 
@@ -67,14 +71,21 @@
     .dark ::-webkit-scrollbar-thumb { background: #3a3a3a; }
     .dark ::-webkit-scrollbar-thumb:hover { background: #4d4d4d; }
 
-    /* Sistem kartu glass — permukaan translusen + blur supaya grid terbaca
-       tembus, hairline border yang berubah jadi glow aksen saat hover. */
+    /* Sistem kartu glass: permukaan translusen + hairline border yang berubah
+       jadi glow aksen saat hover. */
     .card {
         background-color: var(--glass-bg);
-        backdrop-filter: blur(18px) saturate(160%);
-        -webkit-backdrop-filter: blur(18px) saturate(160%);
         border: 1px solid var(--glass-border);
         transition: box-shadow 0.25s ease, transform 0.25s ease, border-color 0.25s ease;
+    }
+
+    /* Blur hanya di landing, tempat kartunya sedikit dan grid latar memang
+       ingin terbaca tembus. Dashboard bisa punya belasan kartu sekaligus, dan
+       backdrop-filter sebanyak itu membuat gulir maupun tiap morph Livewire
+       harus mengomposisi ulang seluruh layar. */
+    body.lp .card {
+        backdrop-filter: blur(18px) saturate(160%);
+        -webkit-backdrop-filter: blur(18px) saturate(160%);
     }
     .card-hover:hover {
         border-color: color-mix(in srgb, var(--primary) 40%, var(--glass-border));
@@ -130,11 +141,7 @@
     }
     .theme-toggle-btn:hover { color: #f59e0b; }
 
-    /* Tombol yang mengikuti kursor dalam batasnya sendiri — JS menggerakkan
-       transform, CSS hanya memberi easing. */
-    .magnetic { transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1); will-change: transform; }
-
-    /* Konten HTML dari rich editor (about, project, career) — satu gaya bersama
+    /* Konten HTML dari rich editor (about, project, career), satu gaya bersama
        supaya teks terformat tampak native, bukan default browser. */
     .prose-content { color: var(--ink-soft); line-height: 1.75; }
     .prose-content > *:first-child { margin-top: 0; }
@@ -158,6 +165,68 @@
         overflow: hidden;
         -webkit-mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
         mask-image: linear-gradient(to bottom, black 65%, transparent 100%);
+    }
+
+
+    /* Skeleton bersama. Dua bentuk: .sk untuk blok berdiri sendiri, dan
+       .sk-frame untuk wadah gambar — di sana skeleton jadi lapisan di atas
+       kotaknya, supaya tidak beradu dengan background wadah itu sendiri. */
+    .sk {
+        position: relative;
+        overflow: hidden;
+        background-color: color-mix(in srgb, var(--ink) 8%, transparent);
+        background-image: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in srgb, var(--ink) 12%, transparent),
+            transparent
+        );
+        background-size: 200% 100%;
+        background-repeat: no-repeat;
+        animation: sk-sweep 1.5s ease-in-out infinite;
+    }
+
+    .sk-frame { position: relative; }
+    .sk-frame::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: 2;
+        border-radius: inherit;
+        background-color: color-mix(in srgb, var(--ink) 8%, transparent);
+        background-image: linear-gradient(
+            90deg,
+            transparent,
+            color-mix(in srgb, var(--ink) 12%, transparent),
+            transparent
+        );
+        background-size: 200% 100%;
+        background-repeat: no-repeat;
+        animation: sk-sweep 1.5s ease-in-out infinite;
+    }
+    .sk-frame.is-ready::before { display: none; }
+
+    @keyframes sk-sweep {
+        from { background-position: -100% 0; }
+        to { background-position: 200% 0; }
+    }
+
+    /* Gambar menempati kotaknya sejak awal; ia hanya dimunculkan setelah
+       berkasnya siap, jadi pergantiannya cuma opacity tanpa geser tata letak. */
+    .sk-img { opacity: 0; transition: opacity 0.45s var(--ease-out); }
+    .sk-img.is-ready { opacity: 1; }
+
+    /* Satu frame tanpa transisi saat tema ditukar. Tanpa ini setiap permukaan
+       memudar dengan durasi sendiri-sendiri dan pergantian terbaca sebagai lag. */
+    html.is-theme-switching *,
+    html.is-theme-switching *::before,
+    html.is-theme-switching *::after {
+        transition: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .sk, .sk-frame::before { animation: none; }
+        .sk-img { transition: none; }
     }
 
     [x-cloak] { display: none !important; }

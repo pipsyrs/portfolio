@@ -223,9 +223,45 @@
 }
 @keyframes dash-spin { to { transform: rotate(360deg); } }
 
+/* ---------------------------------------------------------------------------
+   Status sibuk. Dipasang dashboard.js ke elemen yang memicu request Livewire,
+   jadi setiap tombol dapat umpan balik yang sama tanpa markup tambahan.
+   Munculnya ditunda 90ms supaya aksi yang selesai seketika tidak berkedip.
+   --------------------------------------------------------------------------- */
+.dash-busy {
+    position: relative;
+    pointer-events: none;
+}
+.dash-busy, .dash-busy * {
+    animation: dash-busy-mute 1ms linear 90ms both;
+}
+.dash-busy::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    margin: auto;
+    width: 1.05em;
+    height: 1.05em;
+    border-radius: 50%;
+    border: 2px solid color-mix(in srgb, var(--dash-busy-ink, #888) 26%, transparent);
+    border-top-color: var(--dash-busy-ink, #888);
+    opacity: 0;
+    animation: dash-spin 0.62s linear infinite, dash-busy-show 1ms linear 90ms forwards;
+}
+@keyframes dash-busy-mute { to { color: transparent; } }
+@keyframes dash-busy-show { to { opacity: 1; } }
+
+/* Tombol unggah bawaan browser: satu aturan global, bukan <style> yang ikut
+   tercetak ulang di setiap instance x-dash.file-drop. */
+input[type="file"]::file-selector-button {
+    background-color: var(--primary);
+    cursor: pointer;
+}
+
 @media (prefers-reduced-motion: reduce) {
     .dash-skeleton, .dash-spinner { animation: none; }
     .card-hover:hover, .btn-primary:hover, .btn-secondary:hover { transform: none; }
+    .dash-busy::after { animation: dash-busy-show 1ms linear 90ms forwards; }
 }
 
 /* ---------------------------------------------------------------------------

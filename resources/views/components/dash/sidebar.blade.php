@@ -56,7 +56,7 @@
                    style="color: var(--ink-soft);">
                     {{ $groupLabel }}
                 </p>
-
+                
                 @foreach ($items as $item)
                     <a href="{{ route($item['route']) }}" wire:navigate
                        @class(['dash-nav-link', 'dash-rail-item', 'active' => request()->routeIs($item['pattern'])])

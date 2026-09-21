@@ -1,106 +1,221 @@
-<section id="certifications" class="py-24 md:py-28">
-    <div class="container mx-auto px-6 md:px-12 lg:px-24">
-        <!-- Section Header -->
-        <div class="mb-14" data-aos="fade-up">
-            <p class="eyebrow mb-2"><span class="section-num">05</span> {!! bt('Certifications') !!}</p>
-            <h2 class="text-3xl md:text-4xl font-semibold" style="color: var(--ink);">{!! bt('Certifications') !!}</h2>
-            <p class="mt-3 max-w-2xl text-base md:text-lg" style="color: var(--ink-soft);">{!! bt('Licenses and certificates earned along the way.') !!}</p>
+<section id="certifications" class="lp-section">
+    <div class="lp-shell">
+        <div class="flex flex-wrap items-end justify-between gap-5">
+            <div>
+                <p class="lp-slug" data-reveal>
+                    <span class="idx">06</span>
+                    <span class="i18n-en">Certifications</span><span class="i18n-id">Sertifikasi</span>
+                </p>
+                <h2 class="lp-h2 mt-6" data-reveal style="--reveal-delay:60ms">
+                    <span class="i18n-en">Papers on the wall</span><span class="i18n-id">Sertifikat yang saya pegang</span>
+                </h2>
+            </div>
+            @if (count($certifications) > 0)
+                <p class="lp-meta" data-reveal>{{ count($certifications) }}
+                    <span class="i18n-en">on record</span><span class="i18n-id">tercatat</span>
+                </p>
+            @endif
         </div>
 
-        @if(count($certifications) > 0)
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                @foreach($certifications as $index => $cert)
+        @if (count($certifications) > 0)
+            <div class="cert-grid">
+                @foreach ($certifications as $index => $cert)
                     @php
-                        $issuedEn = !empty($cert['issued_at']) ? \Carbon\Carbon::parse($cert['issued_at'])->locale('en')->translatedFormat('F Y') : '';
-                        $issuedId = !empty($cert['issued_at']) ? \Carbon\Carbon::parse($cert['issued_at'])->locale('id')->translatedFormat('F Y') : '';
+                        $issuedEn = ! empty($cert['issued_at']) ? \Carbon\Carbon::parse($cert['issued_at'])->locale('en')->translatedFormat('M Y') : '';
+                        $issuedId = ! empty($cert['issued_at']) ? \Carbon\Carbon::parse($cert['issued_at'])->locale('id')->translatedFormat('M Y') : '';
 
-                        $noExpiry = !empty($cert['no_expiry']) || empty($cert['expired_at']);
-                        $isExpired = !$noExpiry && \Carbon\Carbon::parse($cert['expired_at'])->isPast();
-                        $expiredEn = !$noExpiry ? \Carbon\Carbon::parse($cert['expired_at'])->locale('en')->translatedFormat('F Y') : '';
-                        $expiredId = !$noExpiry ? \Carbon\Carbon::parse($cert['expired_at'])->locale('id')->translatedFormat('F Y') : '';
+                        $noExpiry = ! empty($cert['no_expiry']) || empty($cert['expired_at']);
+                        $expired = ! $noExpiry && \Carbon\Carbon::parse($cert['expired_at'])->isPast();
+                        $expiredEn = ! $noExpiry ? \Carbon\Carbon::parse($cert['expired_at'])->locale('en')->translatedFormat('M Y') : '';
+                        $expiredId = ! $noExpiry ? \Carbon\Carbon::parse($cert['expired_at'])->locale('id')->translatedFormat('M Y') : '';
 
-                        $ext = !empty($cert['file']) ? strtolower(pathinfo($cert['file'], PATHINFO_EXTENSION)) : null;
-                        $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif']);
+                        $ext = ! empty($cert['file']) ? strtolower(pathinfo($cert['file'], PATHINFO_EXTENSION)) : null;
+                        $isImage = in_array($ext, ['jpg', 'jpeg', 'png', 'webp', 'gif'], true);
                     @endphp
-                    <div class="card card-hover rounded-2xl p-6 flex gap-5" data-aos="fade-up" data-aos-delay="{{ ($index % 4) * 50 }}">
-                        @if(!empty($cert['file']) && $isImage)
-                            <div class="w-14 h-14 rounded-2xl flex-shrink-0 overflow-hidden" style="border: 1px solid var(--hairline);">
-                                <img src="{{ safe_image_url($cert['file']) }}" alt="{{ $cert['title'] ?? '' }}" class="w-full h-full object-cover">
+
+                    <article class="cert-card lp-card lp-card-int" data-reveal style="--reveal-delay:{{ min($index, 5) * 45 }}ms">
+                        <div class="cert-top">
+                            @if (! empty($cert['file']) && $isImage)
+                                <span class="cert-thumb sk-frame">
+                                    <img src="{{ safe_image_url($cert['file']) }}" alt="" loading="lazy" class="sk-img">
+                                </span>
+                            @else
+                                <span class="cert-thumb cert-thumb--blank" aria-hidden="true">
+                                    <i class="{{ $ext === 'pdf' ? 'fas fa-file-pdf' : 'fas fa-certificate' }}"></i>
+                                </span>
+                            @endif
+
+                            <div class="cert-main">
+                                <h3 class="cert-title">{{ $cert['title'] ?? '' }}</h3>
+                                @if (! empty($cert['issuer']))
+                                    <p class="cert-issuer">{{ $cert['issuer'] }}</p>
+                                @endif
                             </div>
-                        @else
-                            <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background-color: color-mix(in srgb, var(--primary) 10%, transparent);">
-                                <i class="{{ $ext === 'pdf' ? 'fas fa-file-pdf' : 'fas fa-certificate' }} text-2xl" style="color: var(--primary);"></i>
+
+                            @if ($expired)
+                                <span class="cert-flag is-off">{!! bt('Expired') !!}</span>
+                            @elseif ($noExpiry)
+                                <span class="cert-flag is-on">{!! bt('No Expiry') !!}</span>
+                            @else
+                                <span class="cert-flag is-on">{!! bt('Valid') !!}</span>
+                            @endif
+                        </div>
+
+                        <dl class="cert-period lp-meta">
+                            @if ($issuedEn)
+                                <dt class="sr-only"><span class="i18n-en">Issued</span><span class="i18n-id">Terbit</span></dt>
+                                <dd><span class="i18n-en">{{ $issuedEn }}</span><span class="i18n-id">{{ $issuedId }}</span></dd>
+                            @endif
+                            @if (! $noExpiry)
+                                <span class="cert-sep" aria-hidden="true"></span>
+                                <dt class="sr-only"><span class="i18n-en">Expires</span><span class="i18n-id">Berakhir</span></dt>
+                                <dd><span class="i18n-en">{{ $expiredEn }}</span><span class="i18n-id">{{ $expiredId }}</span></dd>
+                            @endif
+                            @if (! empty($cert['credential_id']))
+                                <span class="cert-sep" aria-hidden="true"></span>
+                                <dd class="cert-credential">{{ $cert['credential_id'] }}</dd>
+                            @endif
+                        </dl>
+
+                        @if (! empty($cert['file']) || ! empty($cert['credential_url']))
+                            <div class="cert-links">
+                                @if (! empty($cert['file']))
+                                    <a href="{{ safe_image_url($cert['file']) }}" target="_blank" rel="noopener noreferrer">
+                                        <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                                        {!! bt('View Certificate') !!}
+                                    </a>
+                                @endif
+                                @if (! empty($cert['credential_url']))
+                                    <a href="{{ $cert['credential_url'] }}" target="_blank" rel="noopener noreferrer">
+                                        <i class="fas fa-shield-halved" aria-hidden="true"></i>
+                                        {!! bt('View Credential') !!}
+                                    </a>
+                                @endif
                             </div>
                         @endif
-
-                        <div class="min-w-0 flex-1">
-                            <div class="flex items-start justify-between gap-3">
-                                <h3 class="text-base font-semibold leading-snug mb-1" style="color: var(--ink);">{{ $cert['title'] ?? '' }}</h3>
-                                @if($isExpired)
-                                    <span class="mono inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold flex-shrink-0 uppercase tracking-wide" style="background-color: color-mix(in srgb, #ef4444 12%, transparent); color: #dc2626;">
-                                        {!! bt('Expired') !!}
-                                    </span>
-                                @else
-                                    <span class="mono inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold flex-shrink-0 uppercase tracking-wide" style="background-color: color-mix(in srgb, #10b981 12%, transparent); color: #059669;">
-                                        <i class="fas fa-shield-halved text-[9px]"></i>
-                                        {!! bt('Verified') !!}
-                                    </span>
-                                @endif
-                            </div>
-                            <p class="text-sm font-medium mb-3" style="color: var(--primary);">{{ $cert['issuer'] ?? '' }}</p>
-
-                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1.5 text-xs" style="color: var(--ink-soft);">
-                                @if(!empty($cert['issued_at']))
-                                    <span class="inline-flex items-center gap-1.5">
-                                        <i class="far fa-calendar-alt"></i>
-                                        <span class="i18n-en">{!! bt('Issued') !!} {{ $issuedEn }}</span>
-                                        <span class="i18n-id">{!! bt('Issued') !!} {{ $issuedId }}</span>
-                                    </span>
-                                @endif
-                                <span class="inline-flex items-center gap-1.5">
-                                    <i class="far fa-clock"></i>
-                                    @if($noExpiry)
-                                        {!! bt('No Expiry') !!}
-                                    @else
-                                        <span class="i18n-en">{!! bt('Expires') !!} {{ $expiredEn }}</span>
-                                        <span class="i18n-id">{!! bt('Expires') !!} {{ $expiredId }}</span>
-                                    @endif
-                                </span>
-                                @if(!empty($cert['credential_id']))
-                                    <span class="inline-flex items-center gap-1.5">
-                                        <i class="fas fa-hashtag"></i>
-                                        {{ $cert['credential_id'] }}
-                                    </span>
-                                @endif
-                            </div>
-
-                            <div class="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3">
-                                @if(!empty($cert['file']))
-                                    <a href="{{ safe_image_url($cert['file']) }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold" style="color: var(--primary);">
-                                        {!! bt('View Certificate') !!}
-                                        <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
-                                    </a>
-                                @endif
-                                @if(!empty($cert['credential_url']))
-                                    <a href="{{ $cert['credential_url'] }}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1.5 text-xs font-semibold" style="color: var(--primary);">
-                                        {!! bt('View Credential') !!}
-                                        <i class="fas fa-arrow-up-right-from-square text-[10px]"></i>
-                                    </a>
-                                @endif
-                            </div>
-                        </div>
-                    </div>
+                    </article>
                 @endforeach
             </div>
         @else
-            <div class="text-center py-12">
-                <div class="w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4" style="background-color: var(--surface-alt);">
-                    <i class="fas fa-certificate text-xl" style="color: var(--ink-soft);"></i>
-                </div>
-                <p style="color: var(--ink-soft);">
-                    <span class="i18n-en">No certifications added yet.</span><span class="i18n-id">Belum ada sertifikasi.</span>
+            <div class="lp-card p-6 mt-10" data-reveal>
+                <p class="text-sm" style="color: var(--ink-soft);">
+                    <span class="i18n-en">No certificates have been added yet. Upload them from the dashboard to list them here.</span><span class="i18n-id">Belum ada sertifikat yang ditambahkan. Unggah dari dasbor untuk menampilkannya di sini.</span>
                 </p>
             </div>
         @endif
     </div>
 </section>
+
+<style>
+    .cert-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(min(100%, 24rem), 1fr));
+        gap: 0.9rem;
+        margin-block-start: clamp(2.5rem, 6vw, 4rem);
+    }
+
+    .cert-card {
+        display: flex;
+        flex-direction: column;
+        gap: 0.9rem;
+        padding: clamp(1.1rem, 3vw, 1.5rem);
+    }
+
+    .cert-top {
+        display: grid;
+        grid-template-columns: auto 1fr auto;
+        align-items: start;
+        gap: 0.9rem;
+    }
+
+    .cert-thumb {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        inline-size: 52px;
+        block-size: 52px;
+        flex: none;
+        border-radius: 13px;
+        border: 1px solid var(--hairline);
+        background-color: var(--surface);
+        overflow: hidden;
+    }
+    .cert-thumb img { inline-size: 100%; block-size: 100%; object-fit: cover; }
+    .cert-thumb--blank { color: var(--accent-text); font-size: 1.15rem; }
+
+    .cert-main { min-inline-size: 0; }
+    .cert-title {
+        font-weight: 600;
+        line-height: 1.35;
+        letter-spacing: -0.015em;
+        color: var(--ink);
+        font-size: 1.0625rem;
+    }
+    .cert-issuer { margin-block-start: 0.2rem; font-size: 0.8125rem; font-weight: 500; color: var(--accent-text); }
+
+    .cert-flag {
+        display: inline-flex;
+        align-items: center;
+        flex: none;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        border: 1px solid var(--hairline);
+        font-family: var(--font-mono);
+        font-size: 0.625rem;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: var(--ink-soft);
+    }
+    .cert-flag.is-on {
+        color: color-mix(in srgb, var(--success) 45%, var(--ink));
+        border-color: color-mix(in srgb, var(--success) 40%, var(--hairline));
+        background-color: color-mix(in srgb, var(--success) 10%, transparent);
+    }
+    .cert-flag.is-off {
+        color: color-mix(in srgb, var(--danger) 55%, var(--ink));
+        border-color: color-mix(in srgb, var(--danger) 40%, var(--hairline));
+        background-color: color-mix(in srgb, var(--danger) 10%, transparent);
+    }
+
+    .cert-period {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.45rem 0.6rem;
+    }
+    .cert-sep {
+        inline-size: 0.7rem;
+        block-size: 1px;
+        flex: none;
+        background-color: var(--ink-soft);
+        opacity: 0.5;
+    }
+    .cert-credential { overflow-wrap: anywhere; }
+
+    .cert-links {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.25rem 1.25rem;
+        margin-block-start: auto;
+        padding-block-start: 0.85rem;
+        border-block-start: 1px solid var(--rule);
+    }
+    .cert-links a {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-block-size: 44px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--accent-text);
+        transition: gap 0.24s var(--ease-out);
+    }
+    .cert-links a i { font-size: 0.6875rem; }
+    .cert-links a:hover { gap: 0.7rem; text-decoration: underline; text-underline-offset: 3px; }
+
+    @media (prefers-reduced-motion: reduce) {
+        .cert-links a, .cert-links a:hover { transition: none; gap: 0.45rem; }
+    }
+</style>

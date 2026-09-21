@@ -47,7 +47,3 @@
         </div>
     </div>
 </div>
-
-<style>
-    input[type="file"]::file-selector-button { background-color: var(--primary); cursor: pointer; }
-</style>
