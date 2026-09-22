@@ -1319,6 +1319,16 @@
 
         document.addEventListener('livewire:navigated', lpBoot);
 
+        // Livewire me-morph section Contact setelah form dikirim. Elemen baru
+        // yang memiliki data-reveal perlu didaftarkan lagi ke observer.
+        document.addEventListener('livewire:init', () => {
+            Livewire.hook('morph.updated', ({ el }) => {
+                if (el.id === 'lp-main' || el.closest?.('#lp-main')) {
+                    lpInitReveal();
+                }
+            });
+        });
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', lpBoot, { once: true });
         } else {
