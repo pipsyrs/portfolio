@@ -7,7 +7,23 @@
     'preview' => true,
 ])
 
-<div x-data="{ dragging: false }">
+<div x-data="{
+        dragging: false,
+        initialPreview: @js($current),
+        previewUrl: @js($current),
+        previewFile(event) {
+            const file = event.target.files?.[0];
+
+            if (!file || !file.type.startsWith('image/')) {
+                this.previewUrl = this.initialPreview;
+                return;
+            }
+
+            const reader = new FileReader();
+            reader.onload = () => { this.previewUrl = reader.result; };
+            reader.readAsDataURL(file);
+        },
+    }">
     @if ($label)<label class="dash-label">{{ $label }}</label>@endif
 
     <div @dragover.prevent="dragging = true"
@@ -20,17 +36,17 @@
         @if ($preview)
             <div class="flex h-14 w-14 shrink-0 items-center justify-center overflow-hidden rounded-xl"
                  style="background-color: var(--surface-alt);">
-                @if ($current)
-                    <img src="{{ $current }}" alt="" class="h-full w-full object-cover">
-                @else
-                    <i class="fa-solid fa-image text-sm" style="color: var(--ink-soft);"></i>
-                @endif
+                <template x-if="previewUrl">
+                    <img :src="previewUrl" alt="" class="h-full w-full object-cover">
+                </template>
+                <i x-show="!previewUrl" class="fa-solid fa-image text-sm" style="color: var(--ink-soft);"></i>
             </div>
         @endif
 
         <div class="min-w-0 flex-1">
             <input type="file" accept="{{ $accept }}"
                    {{ $attributes }}
+                     @change="previewFile($event)"
                    class="block w-full text-xs file:mr-3 file:rounded-lg file:border-0 file:px-3 file:py-1.5 file:text-xs file:font-medium file:text-white"
                    style="color: var(--ink-soft);">
 

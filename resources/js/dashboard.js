@@ -16,6 +16,14 @@ const token = (name, fallback = '') =>
 
 const isDark = () => document.documentElement.classList.contains('dark');
 
+function syncStoredTheme() {
+    const savedTheme = localStorage.getItem('color-theme');
+    const shouldUseDark = savedTheme === 'dark'
+        || (!savedTheme && window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    document.documentElement.classList.toggle('dark', shouldUseDark);
+}
+
 function hexToRgba(hex, alpha) {
     const value = hex.replace('#', '').trim();
 
@@ -650,12 +658,14 @@ document.addEventListener('livewire:navigated', () => {
     // Navigasi selesai: tutup paksa, karena halaman baru membawa DOM baru dan
     // penghitung dari halaman lama tidak lagi relevan.
     hideOverlay(true);
+    syncStoredTheme();
     syncThemeIcons();
     initCharts();
     initCountUp();
 });
 
 document.addEventListener('DOMContentLoaded', () => {
+    syncStoredTheme();
     syncThemeIcons();
     initCharts();
     initCountUp();

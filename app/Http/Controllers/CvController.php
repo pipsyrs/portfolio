@@ -35,7 +35,8 @@ class CvController extends Controller
             'Content-Type' => 'application/pdf',
             'Content-Disposition' => 'inline; filename="'.$filename.'"',
             'X-Content-Type-Options' => 'nosniff',
-            'Content-Security-Policy' => "default-src 'none'; object-src 'none'",
+            'Content-Security-Policy' => "frame-ancestors 'self'",
+            'X-Frame-Options' => 'SAMEORIGIN',
         ]);
     }
 }
