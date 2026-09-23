@@ -2,7 +2,7 @@
 
 @section('content')
     {{-- Bagian yang dimatikan di Pengaturan tidak dirender sama sekali,
-         sehingga komponennya juga tidak ikut melakukan query. --}}
+            sehingga komponennya juga tidak ikut melakukan query. --}}
     @foreach ([
         'hero' => 'sections.hero',
         'about' => 'sections.about',
@@ -17,7 +17,7 @@
         @if (settings()->sectionEnabled($key))
             @if ($component === null)
                 {{-- Keamanan tidak menyentuh basis data, jadi ia hanya komponen
-                     Blade statis — tanpa komponen Livewire yang kosong isinya. --}}
+                        Blade statis — tanpa komponen Livewire yang kosong isinya. --}}
                 <x-landing.security />
             @else
                 @livewire($component, [], $key)

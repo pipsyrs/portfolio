@@ -350,6 +350,29 @@ document.addEventListener('alpine:init', () => {
             // ditambahkan Livewire setelah render ikut terpantau.
             this.$el.addEventListener('input', () => this.check());
             this.$el.addEventListener('change', () => this.check());
+
+            // Livewire $set() dan wire:model.live memperbarui nilai input tanpa
+            // memicu event DOM input/change. Setelah Livewire selesai memproses
+            // commit dan morph DOM, periksa ulang apakah ada perubahan.
+            const checkAfterLivewire = () => {
+                requestAnimationFrame(() => this.check());
+            };
+            document.addEventListener('livewire:morph.updated', checkAfterLivewire);
+
+            // Observer untuk menangkap perubahan value attribute yang diset
+            // secara programatik (termasuk wire:model.live pada color input).
+            this._observer = new MutationObserver(() => this.check());
+            this._observer.observe(this.$el, {
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['value'],
+            });
+        },
+
+        destroy() {
+            if (this._observer) {
+                this._observer.disconnect();
+            }
         },
 
         fields() {
@@ -654,11 +677,28 @@ document.addEventListener('submit', (event) => {
 
 document.addEventListener('livewire:navigate', () => showOverlay());
 
+// Simpan status tema sebelum Livewire menukar DOM supaya kelas dark tidak
+// hilang saat <html> baru dari server (yang tidak membawa kelas dark) masuk.
+let themeBeforeNavigate = null;
+
+document.addEventListener('livewire:navigating', () => {
+    themeBeforeNavigate = isDark();
+});
+
 document.addEventListener('livewire:navigated', () => {
     // Navigasi selesai: tutup paksa, karena halaman baru membawa DOM baru dan
     // penghitung dari halaman lama tidak lagi relevan.
     hideOverlay(true);
-    syncStoredTheme();
+
+    // Pulihkan tema: prioritaskan status sebelum navigasi supaya dark mode
+    // tidak sempat hilang walau sebentar.
+    if (themeBeforeNavigate !== null) {
+        document.documentElement.classList.toggle('dark', themeBeforeNavigate);
+        themeBeforeNavigate = null;
+    } else {
+        syncStoredTheme();
+    }
+
     syncThemeIcons();
     initCharts();
     initCountUp();
