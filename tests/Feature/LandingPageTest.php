@@ -27,6 +27,26 @@ class LandingPageTest extends TestCase
             ->assertSee('Pemilik Uji', false);
     }
 
+    public function test_robots_txt_points_crawlers_to_the_public_sitemap(): void
+    {
+        $this->get('/robots.txt')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'text/plain; charset=UTF-8')
+            ->assertSee('Allow: /', false)
+            ->assertSee('Disallow: /pipspanel/', false)
+            ->assertSee('Sitemap: '.route('sitemap'), false);
+    }
+
+    public function test_sitemap_contains_only_the_public_landing_page(): void
+    {
+        $this->get('/sitemap.xml')
+            ->assertOk()
+            ->assertHeader('Content-Type', 'application/xml; charset=UTF-8')
+            ->assertSee('<loc>'.route('index').'</loc>', false)
+            ->assertDontSee('/pipspanel/', false)
+            ->assertDontSee('/view/cv', false);
+    }
+
     public function test_it_records_one_visitor_per_session_per_day(): void
     {
         $this->get('/')->assertOk();

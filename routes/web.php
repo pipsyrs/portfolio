@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\CvController;
 use App\Http\Controllers\SecureFileController;
+use App\Http\Controllers\SeoController;
 use App\Livewire\Dashboard;
 use Illuminate\Support\Facades\Route;
 
@@ -10,6 +11,9 @@ use Illuminate\Support\Facades\Route;
 | Halaman publik
 |--------------------------------------------------------------------------
 */
+
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('robots');
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('sitemap');
 
 Route::get('/', fn () => view('index'))
     ->middleware('track.visitor')

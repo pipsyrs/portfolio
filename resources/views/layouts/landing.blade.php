@@ -29,6 +29,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+    <meta name="google-site-verification" content="E0jfHuhapdN3PpX2VhT-FIjxSfimmmbItyRz8MJ4G2Y" />
 
     <script>
         document.documentElement.classList.add('lp-js');

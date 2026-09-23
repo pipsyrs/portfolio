@@ -94,18 +94,18 @@
                         <div class="lp-field">
                             <label for="contact-name">{!! bt('Name') !!}</label>
                             <input wire:model="name" type="text" id="contact-name" autocomplete="name"
-                                   class="i18n-placeholder @error('name') has-error @enderror"
-                                   data-ph-en="{{ bt_variant('Your name', 'en') }}" data-ph-id="{{ bt_variant('Your name', 'id') }}"
-                                   placeholder="{{ __('Your name') }}">
+                                    class="i18n-placeholder @error('name') has-error @enderror"
+                                    data-ph-en="{{ bt_variant('Your name', 'en') }}" data-ph-id="{{ bt_variant('Your name', 'id') }}"
+                                    placeholder="{{ __('Your name') }}">
                             @error('name') <p class="lp-field-error">{{ $message }}</p> @enderror
                         </div>
 
                         <div class="lp-field">
                             <label for="contact-email">{!! bt('Email Address') !!}</label>
                             <input wire:model="senderEmail" type="email" id="contact-email" autocomplete="email"
-                                   class="i18n-placeholder @error('senderEmail') has-error @enderror"
-                                   data-ph-en="you@example.com" data-ph-id="anda@contoh.com"
-                                   placeholder="you@example.com">
+                                    class="i18n-placeholder @error('senderEmail') has-error @enderror"
+                                    data-ph-en="you@example.com" data-ph-id="anda@contoh.com"
+                                    placeholder="you@example.com">
                             @error('senderEmail') <p class="lp-field-error">{{ $message }}</p> @enderror
                         </div>
                     </div>
@@ -113,19 +113,19 @@
                     <div class="lp-field">
                         <label for="contact-subject">{!! bt('Subject') !!}</label>
                         <input wire:model="subject" type="text" id="contact-subject"
-                               class="i18n-placeholder @error('subject') has-error @enderror"
-                               data-ph-en="{{ bt_variant('What the work is about', 'en') }}" data-ph-id="{{ bt_variant('What the work is about', 'id') }}"
-                               placeholder="{{ __('What the work is about') }}">
+                                class="i18n-placeholder @error('subject') has-error @enderror"
+                                data-ph-en="{{ bt_variant('What the work is about', 'en') }}" data-ph-id="{{ bt_variant('What the work is about', 'id') }}"
+                                placeholder="{{ __('What the work is about') }}">
                         @error('subject') <p class="lp-field-error">{{ $message }}</p> @enderror
                     </div>
 
                     <div class="lp-field">
                         <label for="contact-message">{!! bt('Message') !!}</label>
                         <textarea wire:model="message" id="contact-message" rows="6"
-                                  class="i18n-placeholder @error('message') has-error @enderror"
-                                  data-ph-en="{{ bt_variant('Scope, timeline, budget, whatever you already know', 'en') }}"
-                                  data-ph-id="{{ bt_variant('Scope, timeline, budget, whatever you already know', 'id') }}"
-                                  placeholder="{{ __('Scope, timeline, budget, whatever you already know') }}"></textarea>
+                                    class="i18n-placeholder @error('message') has-error @enderror"
+                                    data-ph-en="{{ bt_variant('Scope, timeline, budget, whatever you already know', 'en') }}"
+                                    data-ph-id="{{ bt_variant('Scope, timeline, budget, whatever you already know', 'id') }}"
+                                    placeholder="{{ __('Scope, timeline, budget, whatever you already know') }}"></textarea>
                         @error('message') <p class="lp-field-error">{{ $message }}</p> @enderror
                     </div>
 
