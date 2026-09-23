@@ -44,7 +44,7 @@
                         </div>
 
                         <div class="project-body">
-                            <h3 class="lp-h3">{{ $project->name }}</h3>
+                            <h3 class="lp-h3">{!! bt_dynamic($project->name) !!}</h3>
 
                             @if ($project->description)
                                 <div class="prose-content fade-clip project-desc">
@@ -55,7 +55,10 @@
                             @if ($project->techStacks->count())
                                 <div class="project-tags">
                                     @foreach ($project->techStacks as $tech)
-                                        <span class="lp-tag">{!! bt_dynamic($project->name) !!}</span>
+                                        <span class="lp-tag">
+                                            <i class="{{ $tech->icon }}" aria-hidden="true"></i>
+                                            {{ $tech->name }}
+                                        </span>
                                     @endforeach
                                 </div>
                             @endif
