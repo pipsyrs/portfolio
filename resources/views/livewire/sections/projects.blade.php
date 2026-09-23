@@ -55,7 +55,7 @@
                             @if ($project->techStacks->count())
                                 <div class="project-tags">
                                     @foreach ($project->techStacks as $tech)
-                                        <span class="lp-tag">{{ $tech->name }}</span>
+                                        <span class="lp-tag">{!! bt_dynamic($project->name) !!}</span>
                                     @endforeach
                                 </div>
                             @endif
