@@ -53,9 +53,9 @@
                                         </dt>
                                         <dd class="contact-value">
                                             @if ($channel['href'])
-                                                <a href="{{ $channel['href'] }}">{{ $channel['value'] }}</a>
+                                                <a href="{{ $channel['href'] }}">{!! bt_dynamic($channel['value']) !!}</a>
                                             @else
-                                                {{ $channel['value'] }}
+                                                {!! bt_dynamic($channel['value']) !!}
                                             @endif
                                         </dd>
                                     </div>
