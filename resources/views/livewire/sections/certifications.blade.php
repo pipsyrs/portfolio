@@ -61,21 +61,25 @@
                             @endif
                         </div>
 
-                        <dl class="cert-period lp-meta">
-                            @if ($issuedEn)
-                                <dt class="sr-only"><span class="i18n-en">Issued</span><span class="i18n-id">Terbit</span></dt>
-                                <dd><span class="i18n-en">{{ $issuedEn }}</span><span class="i18n-id">{{ $issuedId }}</span></dd>
-                            @endif
-                            @if (! $noExpiry)
-                                <span class="cert-sep" aria-hidden="true"></span>
-                                <dt class="sr-only"><span class="i18n-en">Expires</span><span class="i18n-id">Berakhir</span></dt>
-                                <dd><span class="i18n-en">{{ $expiredEn }}</span><span class="i18n-id">{{ $expiredId }}</span></dd>
-                            @endif
-                            @if (! empty($cert['credential_id']))
-                                <span class="cert-sep" aria-hidden="true"></span>
-                                <dd class="cert-credential">{{ $cert['credential_id'] }}</dd>
-                            @endif
-                        </dl>
+                        <div class="flex justify-between">
+                            <dl class="cert-period lp-meta">
+                                @if ($issuedEn)
+                                    <dt class="sr-only"><span class="i18n-en">Issued</span><span class="i18n-id">Terbit</span></dt>
+                                    <dd><span class="i18n-en">{{ $issuedEn }}</span><span class="i18n-id">{{ $issuedId }}</span></dd>
+                                @endif
+                                @if (! $noExpiry)
+                                    <span class="cert-sep" aria-hidden="true"></span>
+                                    <dt class="sr-only"><span class="i18n-en">Expires</span><span class="i18n-id">Berakhir</span></dt>
+                                    <dd><span class="i18n-en">{{ $expiredEn }}</span><span class="i18n-id">{{ $expiredId }}</span></dd>
+                                @endif
+                            </dl>
+
+                            <dl class="lp-meta">
+                                @if (! empty($cert['credential_id']))
+                                    <dd class="cert-credential">{{ $cert['credential_id'] }}</dd>
+                                @endif
+                            </dl>
+                        </div>
 
                         @if (! empty($cert['file']) || ! empty($cert['credential_url']))
                             <div class="cert-links">
