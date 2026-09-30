@@ -19,6 +19,9 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Tolak Host header asing agar URL/asset tidak bisa diarahkan ke domain lain.
+        $middleware->trustHosts();
+
         $middleware->web(append: [
             SetLocale::class,
             SecurityHeaders::class,

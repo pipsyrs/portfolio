@@ -83,39 +83,12 @@ if (! function_exists('format_bytes')) {
 
 if (! function_exists('get_real_ip')) {
     /**
-     * Get real IP address from request, checking various headers
-     * This is useful when behind proxies, load balancers, or CDN
+     * Get client IP. Header proxy hanya dipercaya bila proxy didaftarkan lewat
+     * trustProxies — dibaca langsung, header itu bisa dipalsukan untuk bypass rate limit.
      */
     function get_real_ip()
     {
-        $request = request();
-
-        // Try to get IP from various headers in order of priority
-        $headers = [
-            'HTTP_CF_CONNECTING_IP',    // Cloudflare
-            'HTTP_X_REAL_IP',            // Nginx proxy
-            'HTTP_X_FORWARDED_FOR',      // Standard proxy header
-            'HTTP_CLIENT_IP',            // Proxy
-            'REMOTE_ADDR',                // Direct connection
-        ];
-
-        foreach ($headers as $header) {
-            if ($ip = $request->server($header)) {
-                // X-Forwarded-For can contain multiple IPs, get the first one
-                if (strpos($ip, ',') !== false) {
-                    $ips = explode(',', $ip);
-                    $ip = trim($ips[0]);
-                }
-
-                // Validate IP
-                if (filter_var($ip, FILTER_VALIDATE_IP)) {
-                    return $ip;
-                }
-            }
-        }
-
-        // Fallback to Laravel's ip() method
-        return $request->ip();
+        return request()->ip();
     }
 }
 

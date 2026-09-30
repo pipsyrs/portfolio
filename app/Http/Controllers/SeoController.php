@@ -11,7 +11,7 @@ class SeoController extends Controller
         return response(implode("\n", [
             'User-agent: *',
             'Allow: /',
-            'Disallow: /pipspanel/',
+            'Disallow: /admin/',
             'Disallow: /lang/',
             'Sitemap: '.route('sitemap'),
             '',

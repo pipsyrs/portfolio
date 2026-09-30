@@ -23,9 +23,7 @@ Route::get('/view/cv', [CvController::class, 'show'])->name('view.cv');
 
 Route::get('lang/{locale}', function (string $locale) {
     abort_unless(in_array($locale, ['en', 'id'], true), 404);
-
     session()->put('locale', $locale);
-
     return back();
 })->name('lang.switch');
 

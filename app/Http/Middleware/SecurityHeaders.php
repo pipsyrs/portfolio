@@ -25,23 +25,30 @@ class SecurityHeaders
             $response->headers->set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
         }
 
-        // Landing page masih memuat sejumlah <script> inline, jadi CSP dijalankan
-        // dalam mode Report-Only lebih dulu. Setelah laporan bersih, ganti nama
-        // header ini menjadi Content-Security-Policy untuk menegakkannya.
-        $response->headers->set('Content-Security-Policy-Report-Only', $this->policy());
+        // Ditegakkan dengan 'unsafe-inline'/'unsafe-eval' (script inline + Alpine), versi
+        // ketat dikirim Report-Only sebagai acuan migrasi ke nonce. Lokal dilewati agar
+        // Vite dev server tidak terblokir; CSP bawaan controller (mis. CV) tidak ditimpa.
+        if (! app()->isLocal() && ! $response->headers->has('Content-Security-Policy')) {
+            $response->headers->set('Content-Security-Policy', $this->policy(strict: false));
+        }
+
+        $response->headers->set('Content-Security-Policy-Report-Only', $this->policy(strict: true));
 
         return $response;
     }
 
-    private function policy(): string
+    private function policy(bool $strict): string
     {
+        $scriptSrc = $strict ? "'self'" : "'self' 'unsafe-inline' 'unsafe-eval'";
+
         return implode('; ', [
             "default-src 'self'",
-            "script-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://unpkg.com",
+            "script-src {$scriptSrc} https://cdnjs.cloudflare.com https://unpkg.com https://cdn.jsdelivr.net https://www.google.com https://www.gstatic.com",
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://cdnjs.cloudflare.com https://unpkg.com",
             "font-src 'self' data: https://fonts.gstatic.com https://cdnjs.cloudflare.com",
             "img-src 'self' data: blob: https:",
             "connect-src 'self'",
+            "frame-src 'self' https://www.google.com https://recaptcha.google.com",
             "frame-ancestors 'none'",
             "base-uri 'self'",
             "form-action 'self'",
