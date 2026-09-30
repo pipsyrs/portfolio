@@ -53,10 +53,33 @@
                     </div>
 
                     <div class="flex flex-1 flex-col p-4">
+                        @if ($project->specializations->isNotEmpty())
+                            <ul class="mono mb-1.5 flex flex-wrap gap-x-3 gap-y-1 text-[10px] uppercase tracking-wide" style="color: var(--primary);">
+                                @foreach ($project->specializations as $specialization)
+                                    <li class="inline-flex items-center gap-1.5">
+                                        <i class="{{ $specialization->icon ?: 'fa-solid fa-circle-nodes' }}" aria-hidden="true"></i>
+                                        {{ $specialization->name }}
+                                    </li>
+                                @endforeach
+                            </ul>
+                        @endif
+
                         <h3 class="truncate text-sm font-medium" style="color: var(--ink);">{{ $project->name }}</h3>
 
-                        <div class="prose-content fade-clip mt-1.5 max-h-12 text-xs">
-                            {!! $project->description !!}
+                        <div x-data="{ open: false, clipped: false }"
+                             x-init="$nextTick(() => clipped = $refs.desc.scrollHeight > $refs.desc.clientHeight + 1)">
+                            <div x-ref="desc" id="project-desc-{{ $project->id }}"
+                                 class="dash-desc prose-content fade-clip mt-1.5 max-h-12 text-xs" :class="{ 'is-open': open }">
+                                {!! $project->description !!}
+                            </div>
+
+                            <button type="button" x-cloak x-show="clipped" @click="open = !open"
+                                    :aria-expanded="open.toString()" aria-controls="project-desc-{{ $project->id }}"
+                                    class="mt-1.5 inline-flex items-center gap-1.5 text-[11px] font-medium transition hover:underline"
+                                    style="color: var(--primary);">
+                                <span x-text="open ? 'Tampilkan lebih sedikit' : 'Lihat semua deskripsi'">Lihat semua deskripsi</span>
+                                <i class="fa-solid fa-chevron-down text-[9px] transition-transform" :class="{ 'rotate-180': open }" aria-hidden="true"></i>
+                            </button>
                         </div>
 
                         <div class="mt-auto flex flex-wrap gap-1.5 pt-3">

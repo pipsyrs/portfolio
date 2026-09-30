@@ -44,12 +44,28 @@
                         </div>
 
                         <div class="project-body">
+                            @if ($project->specializations->count())
+                                <ul class="project-spec">
+                                    @foreach ($project->specializations as $specialization)
+                                        <li>
+                                            <i class="{{ $specialization->icon ?: 'fas fa-circle-nodes' }}" aria-hidden="true"></i>
+                                            {{ $specialization->name }}
+                                        </li>
+                                    @endforeach
+                                </ul>
+                            @endif
+
                             <h3 class="lp-h3">{!! bt_dynamic($project->name) !!}</h3>
 
                             @if ($project->description)
-                                <div class="prose-content fade-clip project-desc">
+                                <div class="prose-content fade-clip project-desc" id="project-desc-{{ $project->id }}">
                                     {!! bt_dynamic($project->description, html: true) !!}
                                 </div>
+                                <button type="button" class="project-more" aria-expanded="false" aria-controls="project-desc-{{ $project->id }}" hidden>
+                                    <span class="when-closed"><span class="i18n-en">Read full description</span><span class="i18n-id">Lihat semua deskripsi</span></span>
+                                    <span class="when-open"><span class="i18n-en">Show less</span><span class="i18n-id">Tampilkan lebih sedikit</span></span>
+                                    <i class="fas fa-chevron-down" aria-hidden="true"></i>
+                                </button>
                             @endif
 
                             @if ($project->techStacks->count())
@@ -151,7 +167,37 @@
         gap: 0.65rem;
         min-inline-size: 0;
     }
+    .project-spec {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.35rem 0.9rem;
+        font-size: 0.6875rem;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--accent-text);
+    }
+    .project-spec li { display: inline-flex; align-items: center; gap: 0.4rem; }
+
     .project-desc { font-size: 0.875rem; max-block-size: 3.4rem; }
+
+    .project-more {
+        align-self: flex-start;
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        min-block-size: 44px;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--ink-soft);
+    }
+    .project-more[hidden] { display: none; }
+    .project-more:hover { color: var(--accent-text); }
+    .project-more i { font-size: 0.625rem; transition: transform 0.24s var(--ease-out); }
+    .project-more[aria-expanded="true"] i { transform: rotate(180deg); }
+    .project-more .when-open,
+    .project-more[aria-expanded="true"] .when-closed { display: none; }
+    .project-more[aria-expanded="true"] .when-open { display: inline; }
     .project-tags {
         display: flex;
         flex-wrap: wrap;
@@ -190,6 +236,8 @@
         .project-card.is-wide .project-desc { max-block-size: 5.2rem; }
     }
 
+    .project-card .project-desc.is-open { max-block-size: none; -webkit-mask-image: none; mask-image: none; }
+
     /* Kartu yang lolos filter masuk kembali bertahap, jadi pergantian daftar
        terbaca sebagai gerakan, bukan konten yang tiba-tiba berganti. */
     @keyframes project-in {
@@ -199,7 +247,7 @@
     .project-card.is-enter { animation: project-in 0.45s var(--ease-out) both; animation-delay: var(--enter-delay, 0ms); }
 
     @media (prefers-reduced-motion: reduce) {
-        .project-shot img, .project-links a { transition: none; }
+        .project-shot img, .project-links a, .project-more i { transition: none; }
         .project-card.is-enter { animation: none; }
     }
 </style>
@@ -237,6 +285,7 @@
                 });
 
                 if (empty) empty.hidden = shown > 0;
+                syncMore();
 
                 if (bar) {
                     bar.querySelectorAll('.lp-chip').forEach((chip) => {
@@ -244,6 +293,28 @@
                     });
                 }
             };
+
+            // Tombol toggle hanya muncul kalau deskripsinya memang terpotong.
+            const syncMore = () => {
+                grid.querySelectorAll('.project-more').forEach((btn) => {
+                    const desc = document.getElementById(btn.getAttribute('aria-controls'));
+                    if (!desc || desc.classList.contains('is-open')) return;
+                    btn.hidden = desc.scrollHeight <= desc.clientHeight + 1;
+                });
+            };
+            syncMore();
+
+            if (!grid.dataset.bound) {
+                grid.dataset.bound = '1';
+                window.addEventListener('resize', syncMore);
+                grid.addEventListener('click', (event) => {
+                    const btn = event.target.closest('.project-more');
+                    if (!btn) return;
+                    const open = btn.getAttribute('aria-expanded') !== 'true';
+                    btn.setAttribute('aria-expanded', String(open));
+                    document.getElementById(btn.getAttribute('aria-controls'))?.classList.toggle('is-open', open);
+                });
+            }
 
             if (bar && !bar.dataset.bound) {
                 bar.dataset.bound = '1';

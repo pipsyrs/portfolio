@@ -32,8 +32,7 @@
         </button>
 
         <div x-cloak x-show="menu" @click.outside="menu = false" x-transition.origin.top.right
-             class="card absolute right-0 mt-2 w-52 rounded-xl p-1.5"
-             style="background-color: var(--surface); box-shadow: 0 16px 40px rgb(0 0 0 / 0.16);">
+             class="dash-popover card absolute right-0 z-40 mt-2 w-52 rounded-xl p-1.5">
 
             <div class="px-3 py-2">
                 <p class="truncate text-xs font-medium" style="color: var(--ink);">{{ $owner?->name }}</p>

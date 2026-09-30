@@ -14,7 +14,7 @@
     </button>
 
     <div x-cloak x-show="open" @click.outside="open = false" x-transition.origin.top.right
-         class="card absolute right-0 mt-2 w-80 rounded-xl shadow-lg">
+         class="dash-popover card absolute right-0 z-40 mt-2 w-80 max-w-[calc(100vw-2rem)] overflow-hidden rounded-xl">
 
         <div class="flex items-center justify-between border-b px-4 py-3" style="border-color: var(--hairline);">
             <span class="text-xs font-medium" style="color: var(--ink);">Notifikasi</span>
