@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\CertificateController;
 use App\Http\Controllers\CvController;
 use App\Http\Controllers\SecureFileController;
 use App\Http\Controllers\SeoController;
@@ -20,6 +21,10 @@ Route::get('/', fn () => view('index'))
     ->name('index');
 
 Route::get('/view/cv', [CvController::class, 'show'])->name('view.cv');
+Route::get('/view/certificate/{index}', [CertificateController::class, 'show'])
+    ->whereNumber('index')
+    ->middleware('throttle:60,1')
+    ->name('view.certificate');
 
 Route::get('lang/{locale}', function (string $locale) {
     abort_unless(in_array($locale, ['en', 'id'], true), 404);

@@ -1,5 +1,6 @@
 @php
     use App\Support\AccentPalette;
+    use App\Support\PersonSchema;
 
     $user = \App\Models\User::owner();
     $primaryColor = settings()->color();
@@ -22,6 +23,8 @@
     ])->filter(fn (string $label, string $key) => settings()->sectionEnabled($key));
 
     $hasCv = filled($user?->cv_file);
+    $personSchema = (new PersonSchema($user))->toArray();
+    $hasCertFiles = collect(is_array($user?->certifications) ? $user->certifications : [])->contains(fn ($cert) => filled($cert['file'] ?? null));
 @endphp
 
 <!DOCTYPE html>
@@ -57,7 +60,10 @@
     <meta name="robots" content="index, follow">
     <link rel="canonical" href="{{ url()->current() }}">
 
-    <meta property="og:type" content="website">
+    <meta property="og:type" content="profile">
+    <meta property="og:site_name" content="{{ $user->name ?? config('app.name', 'Portfolio') }}">
+    <meta property="og:locale" content="{{ $currentLocale === 'id' ? 'id_ID' : 'en_US' }}">
+    <meta property="og:locale:alternate" content="{{ $currentLocale === 'id' ? 'en_US' : 'id_ID' }}">
     <meta property="og:url" content="{{ url()->current() }}">
     <meta property="og:title" content="{{ $user->name ?? config('app.name', 'Portfolio') }} | {{ $user->specialis ?? 'Fullstack Web Developer' }}">
     <meta property="og:description" content="{{ $user->headline ?? 'Portfolio of John Doe, a passionate Fullstack Web Developer specializing in Laravel, Vue.js, and Tailwind CSS.' }}">
@@ -68,6 +74,10 @@
     <meta property="twitter:title" content="{{ $user->name ?? config('app.name', 'Portfolio') }} | {{ $user->specialis ?? 'Fullstack Web Developer' }}">
     <meta property="twitter:description" content="{{ $user->headline ?? 'Portfolio of John Doe, a passionate Fullstack Web Developer specializing in Laravel, Vue.js, and Tailwind CSS.' }}">
     <meta property="twitter:image" content="{{ $seoImage }}">
+
+    @if ($personSchema)
+        <script type="application/ld+json">{!! json_encode($personSchema, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP) !!}</script>
+    @endif
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -511,8 +521,10 @@
         }
 
         .lp-wordmark {
-            display: inline-flex;
-            align-items: center;
+            display: block;
+            flex: 0 1 auto;
+            min-inline-size: 0;
+            line-height: 44px;
             min-block-size: 44px;
             font-weight: 800;
             letter-spacing: -0.035em;
@@ -526,7 +538,8 @@
         .lp-wordmark i { font-style: normal; color: var(--accent-text); }
 
         /* Penanda aktif berupa pil yang meluncur, bukan garis yang muncul-hilang. */
-        .lp-nav-links { position: relative; display: flex; align-items: center; }
+        /* display diatur kelas `hidden xl:flex`; CSS tanpa layer ini akan menimpa utilitas Tailwind. */
+        .lp-nav-links { position: relative; flex: none; }
         .lp-nav-pill {
             position: absolute;
             inset-block: 5px;
@@ -544,7 +557,7 @@
         .lp-nav-link {
             position: relative;
             z-index: 1;
-            padding: 0.55rem 0.75rem;
+            padding: 0.55rem 0.6rem;
             border-radius: 999px;
             font-size: 0.8125rem;
             font-weight: 500;
@@ -725,6 +738,17 @@
             transition: opacity 0.4s var(--ease-out);
         }
         .lp-cv-stage.is-ready iframe { opacity: 1; }
+        .lp-cv-stage img {
+            position: absolute;
+            inset: 0;
+            inline-size: 100%;
+            block-size: 100%;
+            object-fit: contain;
+            padding: clamp(0.75rem, 3vw, 1.5rem);
+            opacity: 0;
+            transition: opacity 0.4s var(--ease-out);
+        }
+        .lp-cv-stage.is-ready img { opacity: 1; }
 
         /* Skeleton menempati panggung sejak modal dibuka sampai PDF benar-benar
            selesai dirender, jadi tidak pernah ada panel kosong. */
@@ -825,14 +849,14 @@
             <div class="bar">
                 <a href="#hero" class="lp-wordmark">{{ $user->name ?? 'Portfolio' }}<i>.</i></a>
 
-                <div class="hidden lg:flex items-center lp-nav-links">
+                <div class="hidden xl:flex items-center lp-nav-links">
                     <span class="lp-nav-pill" aria-hidden="true"></span>
                     @foreach ($navItems as $anchor => $label)
                         <a href="#{{ $anchor }}" class="lp-nav-link">{!! bt($label) !!}</a>
                     @endforeach
                 </div>
 
-                <div class="hidden lg:flex items-center gap-2">
+                <div class="hidden xl:flex items-center gap-2 flex-none">
                     <div class="lp-lang">
                         <span class="lp-lang-thumb" aria-hidden="true"></span>
                         <button type="button" class="lp-lang-btn" data-lang="id" onclick="lpSetLocale('id')">ID</button>
@@ -848,13 +872,12 @@
                         <a href="{{ route('view.cv') }}" target="_blank" rel="noopener"
                            class="lp-btn lp-btn-primary ml-1" data-cv-open>
                             <i class="fas fa-file-pdf text-sm" aria-hidden="true"></i>
-                            <span class="hidden xl:inline">{!! bt('Read the CV') !!}</span>
-                            <span class="xl:hidden">CV</span>
+                            <span>CV</span>
                         </a>
                     @endif
                 </div>
 
-                <div class="flex lg:hidden items-center gap-2">
+                <div class="flex xl:hidden items-center gap-2 flex-none">
                     <button type="button" class="lp-icon-btn lp-theme-btn" aria-label="{{ bt_variant('Switch theme', $currentLocale) }}">
                         <i class="fas fa-moon text-sm lp-theme-icon" aria-hidden="true"></i>
                     </button>
@@ -904,17 +927,18 @@
         </div>
     </div>
 
-    @if ($hasCv)
+    {{-- Satu penampil dokumen untuk CV dan sertifikat; tombol pemicu bisa mengganti sumbernya. --}}
+    @if ($hasCv || $hasCertFiles)
         <div id="lp-cv" aria-hidden="true" inert data-cv-src="{{ route('view.cv') }}">
             <div class="scrim" data-cv-close></div>
             <div class="panel" role="dialog" aria-modal="true" aria-labelledby="lp-cv-title">
                 <div class="lp-cv-head">
                     <p class="lp-cv-title" id="lp-cv-title">
                         <i class="fas fa-file-pdf" aria-hidden="true"></i>
-                        <span>{{ $user->name ?? 'Portfolio' }} &mdash; CV</span>
+                        <span id="lp-cv-name" data-default="{{ $user->name ?? 'Portfolio' }} — CV">{{ $user->name ?? 'Portfolio' }} &mdash; CV</span>
                     </p>
                     <div class="lp-cv-acts">
-                        <a href="{{ route('view.cv') }}" download class="lp-icon-btn" aria-label="{{ bt_variant('Download', $currentLocale) }}">
+                        <a href="{{ route('view.cv') }}" download class="lp-icon-btn" data-cv-download aria-label="{{ bt_variant('Download', $currentLocale) }}">
                             <i class="fas fa-download text-sm" aria-hidden="true"></i>
                         </a>
                         <button type="button" class="lp-icon-btn" data-cv-close aria-label="{{ bt_variant('Close', $currentLocale) }}">
@@ -931,13 +955,14 @@
                     </div>
 
                     <iframe id="lp-cv-frame" title="{{ bt_variant('Read the CV', $currentLocale) }}"></iframe>
+                    <img id="lp-cv-img" alt="" hidden>
 
                     <div class="lp-cv-fallback">
                         <i class="fas fa-file-pdf text-2xl lp-accent" aria-hidden="true"></i>
                         <p class="text-sm" style="color: var(--ink-soft); max-inline-size: 36ch;">
                             <span class="i18n-en">This browser cannot preview PDFs inline. Download the file to read it.</span><span class="i18n-id">Peramban ini tidak bisa menampilkan PDF di halaman. Unduh berkasnya untuk membaca.</span>
                         </p>
-                        <a href="{{ route('view.cv') }}" download class="lp-btn lp-btn-primary">
+                        <a href="{{ route('view.cv') }}" download class="lp-btn lp-btn-primary" data-cv-download>
                             <i class="fas fa-download text-sm" aria-hidden="true"></i>
                             <span>{!! bt('Download') !!}</span>
                         </a>
@@ -1203,27 +1228,44 @@
 
             const stage = document.getElementById('lp-cv-stage');
             const frame = document.getElementById('lp-cv-frame');
-            const src = modal.dataset.cvSrc;
+            const img = document.getElementById('lp-cv-img');
+            const name = document.getElementById('lp-cv-name');
+            const downloads = modal.querySelectorAll('[data-cv-download]');
             let opener = null;
 
             frame.addEventListener('load', () => {
                 if (frame.getAttribute('src')) stage.classList.add('is-ready');
             });
+            img.addEventListener('load', () => stage.classList.add('is-ready'));
 
             const open = (event) => {
                 event.preventDefault();
                 opener = event.currentTarget;
+
+                // Tombol sertifikat membawa sumbernya sendiri; tombol CV memakai bawaan modal.
+                const src = opener.dataset.docSrc || modal.dataset.cvSrc;
+                const isImage = opener.dataset.docType === 'image';
+                name.textContent = opener.dataset.docTitle || name.dataset.default;
+                downloads.forEach((a) => a.setAttribute('href', src));
+
                 modal.classList.add('is-open');
                 modal.removeAttribute('inert');
                 modal.setAttribute('aria-hidden', 'false');
                 document.body.style.overflow = 'hidden';
 
+                const target = isImage ? img : frame;
+                const current = target.getAttribute('src');
+                if (current !== src) stage.classList.remove('is-ready');
+                stage.classList.remove('is-fallback');
+                frame.hidden = isImage;
+                img.hidden = !isImage;
+
                 // pdfViewerEnabled bernilai false di peramban yang justru akan
                 // memaksa unduhan; di sana iframe cuma menghasilkan panel kosong.
-                if (navigator.pdfViewerEnabled === false) {
+                if (!isImage && navigator.pdfViewerEnabled === false) {
                     stage.classList.add('is-fallback');
-                } else if (!frame.getAttribute('src')) {
-                    frame.setAttribute('src', src);
+                } else if (current !== src) {
+                    target.setAttribute('src', src);
                 }
 
                 modal.querySelector('.lp-cv-acts [data-cv-close]')?.focus();

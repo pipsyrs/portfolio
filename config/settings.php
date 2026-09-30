@@ -39,6 +39,8 @@ return [
         // SEO
         'seo_keywords' => ['cast' => 'string', 'default' => null],
         'seo_og_image' => ['cast' => 'string', 'default' => null],
+        'seo_city' => ['cast' => 'string', 'default' => null],
+        'seo_country' => ['cast' => 'string', 'default' => null],
 
         // Media sosial
         'github_link' => ['cast' => 'string', 'default' => null],

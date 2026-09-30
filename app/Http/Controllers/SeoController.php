@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
 use Illuminate\Http\Response;
 
 class SeoController extends Controller
@@ -21,11 +22,13 @@ class SeoController extends Controller
     public function sitemap(): Response
     {
         $homeUrl = htmlspecialchars(route('index'), ENT_XML1 | ENT_QUOTES, 'UTF-8');
+        $lastmod = User::owner()?->updated_at;
 
         $xml = '<?xml version="1.0" encoding="UTF-8"?>'."\n"
             .'<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">'."\n"
             .'    <url>'."\n"
             .'        <loc>'.$homeUrl.'</loc>'."\n"
+            .($lastmod ? '        <lastmod>'.$lastmod->toDateString().'</lastmod>'."\n" : '')
             .'        <changefreq>weekly</changefreq>'."\n"
             .'        <priority>1.0</priority>'."\n"
             .'    </url>'."\n"

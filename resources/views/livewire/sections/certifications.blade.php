@@ -84,8 +84,11 @@
                         @if (! empty($cert['file']) || ! empty($cert['credential_url']))
                             <div class="cert-links">
                                 @if (! empty($cert['file']))
-                                    <a href="{{ safe_image_url($cert['file']) }}" target="_blank" rel="noopener noreferrer">
-                                        <i class="fas fa-arrow-up-right-from-square" aria-hidden="true"></i>
+                                    {{-- Tetap sebuah tautan: tanpa JS berkasnya masih bisa dibuka. --}}
+                                    <a href="{{ route('view.certificate', $index) }}" target="_blank" rel="noopener noreferrer"
+                                       data-cv-open data-doc-src="{{ route('view.certificate', $index) }}"
+                                       data-doc-type="{{ $isImage ? 'image' : 'pdf' }}" data-doc-title="{{ $cert['title'] ?? '' }}">
+                                        <i class="fas fa-eye" aria-hidden="true"></i>
                                         {!! bt('View Certificate') !!}
                                     </a>
                                 @endif

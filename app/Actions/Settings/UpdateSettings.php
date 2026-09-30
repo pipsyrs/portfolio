@@ -18,6 +18,8 @@ class UpdateSettings
         'app_description',
         'app_color',
         'seo_keywords',
+        'seo_city',
+        'seo_country',
         'youtube_link',
         'instagram_link',
         'tiktok_link',

@@ -30,6 +30,10 @@ class Edit extends Component
 
     public string $seo_keywords = '';
 
+    public string $seo_city = '';
+
+    public string $seo_country = '';
+
     public string $youtube_link = '';
 
     public string $instagram_link = '';
@@ -121,6 +125,8 @@ class Edit extends Component
         $this->app_description = (string) settings('app_description');
         $this->app_color = settings()->color();
         $this->seo_keywords = (string) settings('seo_keywords');
+        $this->seo_city = (string) settings('seo_city');
+        $this->seo_country = (string) settings('seo_country');
 
         foreach (self::SOCIALS as $social) {
             $field = $social.'_link';
@@ -165,6 +171,8 @@ class Edit extends Component
             // Warna disuntikkan ke dalam blok <style>, jadi formatnya dikunci.
             'app_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'seo_keywords' => ['nullable', 'string', 'max:500'],
+            'seo_city' => ['nullable', 'string', 'max:80', 'regex:/^[\pL\pM\s.\'-]+$/u'],
+            'seo_country' => ['nullable', 'string', 'max:80', 'regex:/^[\pL\pM\s.\'-]+$/u'],
 
             'maintenance_mode' => ['boolean'],
             'visitor_tracking_enabled' => ['boolean'],
@@ -243,7 +251,8 @@ class Edit extends Component
 
     public function saveSeo(): void
     {
-        $this->persist('saveSeo', ['seo_keywords'], ['seo_keywords'], ['seo_og_image']);
+        $keys = ['seo_keywords', 'seo_city', 'seo_country'];
+        $this->persist('saveSeo', $keys, $keys, ['seo_og_image']);
     }
 
     public function saveSocial(): void

@@ -117,6 +117,16 @@
                                          hint="Pisahkan dengan koma."
                                          placeholder="fullstack developer, laravel, vue, tailwind" />
 
+                        <div class="grid gap-4 sm:grid-cols-2">
+                            <x-dash.input label="Kota" name="seo_city" wire:model="seo_city"
+                                          maxlength="80" pattern="[\p{L}\p{M}\s.'\-]+"
+                                          hint="Dipakai Google untuk mengenali lokasi Anda."
+                                          placeholder="Bandung" />
+                            <x-dash.input label="Negara" name="seo_country" wire:model="seo_country"
+                                          maxlength="80" pattern="[\p{L}\p{M}\s.'\-]+"
+                                          placeholder="Indonesia" />
+                        </div>
+
                         <x-dash.file-drop
                             label="Gambar Open Graph" name="seo_og_image" wire:model="seo_og_image"
                             :current="$seo_og_image ? $seo_og_image->temporaryUrl() : (settings('seo_og_image') ? safe_image_url(settings('seo_og_image')) : null)"
