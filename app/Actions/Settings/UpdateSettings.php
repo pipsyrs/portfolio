@@ -19,6 +19,7 @@ class UpdateSettings
         'app_color',
         'seo_keywords',
         'seo_city',
+        'seo_region',
         'seo_country',
         'youtube_link',
         'instagram_link',

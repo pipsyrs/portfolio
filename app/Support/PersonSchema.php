@@ -90,6 +90,7 @@ class PersonSchema
         $address = array_filter([
             '@type' => 'PostalAddress',
             'addressLocality' => settings('seo_city') ?: null,
+            'addressRegion' => settings('seo_region') ?: null,
             'addressCountry' => settings('seo_country') ?: null,
         ]);
 

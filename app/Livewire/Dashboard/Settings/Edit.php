@@ -32,6 +32,8 @@ class Edit extends Component
 
     public string $seo_city = '';
 
+    public string $seo_region = '';
+
     public string $seo_country = '';
 
     public string $youtube_link = '';
@@ -126,6 +128,7 @@ class Edit extends Component
         $this->app_color = settings()->color();
         $this->seo_keywords = (string) settings('seo_keywords');
         $this->seo_city = (string) settings('seo_city');
+        $this->seo_region = (string) settings('seo_region');
         $this->seo_country = (string) settings('seo_country');
 
         foreach (self::SOCIALS as $social) {
@@ -172,6 +175,7 @@ class Edit extends Component
             'app_color' => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
             'seo_keywords' => ['nullable', 'string', 'max:500'],
             'seo_city' => ['nullable', 'string', 'max:80', 'regex:/^[\pL\pM\s.\'-]+$/u'],
+            'seo_region' => ['nullable', 'string', 'max:80', 'regex:/^[\pL\pM\s.\'-]+$/u'],
             'seo_country' => ['nullable', 'string', 'max:80', 'regex:/^[\pL\pM\s.\'-]+$/u'],
 
             'maintenance_mode' => ['boolean'],
@@ -251,7 +255,7 @@ class Edit extends Component
 
     public function saveSeo(): void
     {
-        $keys = ['seo_keywords', 'seo_city', 'seo_country'];
+        $keys = ['seo_keywords', 'seo_city', 'seo_region', 'seo_country'];
         $this->persist('saveSeo', $keys, $keys, ['seo_og_image']);
     }
 

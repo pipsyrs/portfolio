@@ -122,6 +122,9 @@
                                           maxlength="80" pattern="[\p{L}\p{M}\s.'\-]+"
                                           hint="Dipakai Google untuk mengenali lokasi Anda."
                                           placeholder="Bandung" />
+                            <x-dash.input label="Provinsi" name="seo_region" wire:model="seo_region"
+                                          maxlength="80" pattern="[\p{L}\p{M}\s.'\-]+"
+                                          placeholder="Jawa Barat" />
                             <x-dash.input label="Negara" name="seo_country" wire:model="seo_country"
                                           maxlength="80" pattern="[\p{L}\p{M}\s.'\-]+"
                                           placeholder="Indonesia" />
